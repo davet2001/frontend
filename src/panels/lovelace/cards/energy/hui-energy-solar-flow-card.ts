@@ -1,15 +1,17 @@
-import {
-  ChartData,
-  ChartDataset,
-  ChartOptions,
-  ScatterDataPoint,
-} from "chart.js";
+/**
+ * To do
+ * Verify what happens if incomplete data set is provided e.g.
+ * grid but no generation,
+ * no consumers
+ * no grid
+ * etc
+ */
+import { ChartDataset, ChartOptions, ScatterDataPoint } from "chart.js";
 import {
   addHours,
   differenceInDays,
   differenceInHours,
   endOfToday,
-  isToday,
   startOfToday,
 } from "date-fns/esm";
 import { HassConfig, UnsubscribeFunc } from "home-assistant-js-websocket";
@@ -34,9 +36,7 @@ import "../../../../components/chart/ha-chart-base";
 import "../../../../components/ha-card";
 import {
   EnergyData,
-  EnergySolarForecasts,
   getEnergyDataCollection,
-  getEnergySolarForecasts,
   SolarSourceTypeEnergyPreference,
 } from "../../../../data/energy";
 import {
@@ -49,6 +49,8 @@ import { SubscribeMixin } from "../../../../mixins/subscribe-mixin";
 import { HomeAssistant } from "../../../../types";
 import { LovelaceCard } from "../../types";
 import { EnergySolarGraphCardConfig } from "../types";
+import "../../../../components/chart/elec-sankey";
+import type { ElecRoute } from "../../../../components/chart/elec-sankey";
 
 @customElement("hui-energy-solar-flow-card")
 export class HuiEnergySolarFlowCard
@@ -59,9 +61,11 @@ export class HuiEnergySolarFlowCard
 
   @state() private _config?: EnergySolarGraphCardConfig;
 
-  @state() private _chartData: ChartData = {
-    datasets: [],
-  };
+  // @state() private _chartData: ChartData = {
+  //   datasets: [],
+  // };
+
+  // @state() private _sankey = new ElecSankey();
 
   @state() private _start = startOfToday();
 
@@ -70,6 +74,12 @@ export class HuiEnergySolarFlowCard
   @state() private _compareStart?: Date;
 
   @state() private _compareEnd?: Date;
+
+  @state() private _gridInRoute?: ElecRoute;
+
+  @state() private _generationInRoutes?: { [id: string]: ElecRoute } = {};
+
+  @state() private _consumerRoutes?: { [id: string]: ElecRoute } = {};
 
   protected hassSubscribeRequiredHostProps = ["_config"];
 
@@ -93,7 +103,6 @@ export class HuiEnergySolarFlowCard
     if (!this.hass || !this._config) {
       return nothing;
     }
-
     return html`
       <ha-card>
         ${this._config.title
@@ -104,28 +113,12 @@ export class HuiEnergySolarFlowCard
             "has-header": !!this._config.title,
           })}"
         >
-          <ha-chart-base
-            .hass=${this.hass}
-            .data=${this._chartData}
-            .options=${this._createOptions(
-              this._start,
-              this._end,
-              this.hass.locale,
-              this.hass.config,
-              this._compareStart,
-              this._compareEnd
-            )}
-            chart-type="bar"
-          ></ha-chart-base>
-          ${!this._chartData.datasets.length
-            ? html`<div class="no-data">
-                ${isToday(this._start)
-                  ? this.hass.localize("ui.panel.lovelace.cards.energy.no_data")
-                  : this.hass.localize(
-                      "ui.panel.lovelace.cards.energy.no_data_period"
-                    )}
-              </div>`
-            : ""}
+          <elec-sankey
+            .gridInRoute=${this._gridInRoute ? this._gridInRoute : undefined}
+            .generationInRoutes=${this._generationInRoutes
+              ? this._generationInRoutes
+              : undefined}
+          ></elec-sankey>
         </div>
       </ha-card>
     `;
@@ -302,16 +295,27 @@ export class HuiEnergySolarFlowCard
         (source) => source.type === "solar"
       ) as SolarSourceTypeEnergyPreference[];
 
-    let forecasts: EnergySolarForecasts | undefined;
-    if (
-      solarSources.some((source) => source.config_entry_solar_forecast?.length)
-    ) {
-      try {
-        forecasts = await getEnergySolarForecasts(this.hass);
-      } catch (_e) {
-        // ignore
-      }
-    }
+    // start of test data
+    this._gridInRoute = {
+      id: "thing",
+      text: "test",
+      rate: 37,
+    };
+
+    this._generationInRoutes = {
+      gen1: {
+        id: "gen1",
+        text: "generator1",
+        rate: 56,
+      },
+      gen2: {
+        id: "gen2",
+        text: "generator2",
+        rate: 45,
+      },
+    };
+
+    // end of test data
 
     const datasets: ChartDataset<"bar" | "line">[] = [];
 
@@ -354,18 +358,18 @@ export class HuiEnergySolarFlowCard
       );
     }
 
-    if (forecasts) {
-      datasets.push(
-        ...this._processForecast(
-          energyData.statsMetadata,
-          forecasts,
-          solarSources,
-          computedStyles.getPropertyValue("--primary-text-color"),
-          energyData.start,
-          energyData.end
-        )
-      );
-    }
+    // if (forecasts) {
+    //   datasets.push(
+    //     ...this._processForecast(
+    //       energyData.statsMetadata,
+    //       forecasts,
+    //       solarSources,
+    //       computedStyles.getPropertyValue("--primary-text-color"),
+    //       energyData.start,
+    //       energyData.end
+    //     )
+    //   );
+    // }
 
     this._start = energyData.start;
     this._end = energyData.end || endOfToday();
@@ -373,9 +377,9 @@ export class HuiEnergySolarFlowCard
     this._compareStart = energyData.startCompare;
     this._compareEnd = energyData.endCompare;
 
-    this._chartData = {
-      datasets,
-    };
+    // this._chartData = {
+    //   datasets,
+    // };
   }
 
   private _processDataSet(
@@ -454,87 +458,6 @@ export class HuiEnergySolarFlowCard
         stack: "solar",
         xAxisID: compare ? "xAxisCompare" : undefined,
       });
-    });
-
-    return data;
-  }
-
-  private _processForecast(
-    statisticsMetaData: Record<string, StatisticsMetaData>,
-    forecasts: EnergySolarForecasts,
-    solarSources: SolarSourceTypeEnergyPreference[],
-    borderColor: string,
-    start: Date,
-    end?: Date
-  ) {
-    const data: ChartDataset<"line">[] = [];
-
-    const dayDifference = differenceInDays(end || new Date(), start);
-
-    // Process solar forecast data.
-    solarSources.forEach((source) => {
-      if (source.config_entry_solar_forecast) {
-        const forecastsData: Record<string, number> | undefined = {};
-        source.config_entry_solar_forecast.forEach((configEntryId) => {
-          if (!forecasts![configEntryId]) {
-            return;
-          }
-          Object.entries(forecasts![configEntryId].wh_hours).forEach(
-            ([date, value]) => {
-              const dateObj = new Date(date);
-              if (dateObj < start || (end && dateObj > end)) {
-                return;
-              }
-              if (dayDifference > 35) {
-                dateObj.setDate(1);
-              }
-              if (dayDifference > 2) {
-                dateObj.setHours(0, 0, 0, 0);
-              } else {
-                dateObj.setMinutes(0, 0, 0);
-              }
-              const time = dateObj.getTime();
-              if (time in forecastsData) {
-                forecastsData[time] += value;
-              } else {
-                forecastsData[time] = value;
-              }
-            }
-          );
-        });
-
-        if (forecastsData) {
-          const solarForecastData: ScatterDataPoint[] = [];
-          for (const [time, value] of Object.entries(forecastsData)) {
-            solarForecastData.push({
-              x: Number(time),
-              y: value / 1000,
-            });
-          }
-
-          if (solarForecastData.length) {
-            data.push({
-              type: "line",
-              label: this.hass.localize(
-                "ui.panel.lovelace.cards.energy.energy_solar_graph.forecast",
-                {
-                  name: getStatisticLabel(
-                    this.hass,
-                    source.stat_energy_from,
-                    statisticsMetaData[source.stat_energy_from]
-                  ),
-                }
-              ),
-              fill: false,
-              stepped: false,
-              borderColor,
-              borderDash: [7, 5],
-              pointRadius: 0,
-              data: solarForecastData,
-            });
-          }
-        }
-      }
     });
 
     return data;
