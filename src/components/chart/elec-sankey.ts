@@ -490,6 +490,18 @@ export class ElecSankey extends LitElement {
     return totalHeight;
   }
 
+  private _pvColor(): string {
+    const computedStyles = getComputedStyle(this);
+    const ret = computedStyles.getPropertyValue("--solar-color").trim();
+    return ret || PV_COLOR;
+  }
+
+  private _gridColor(): string {
+    const computedStyles = getComputedStyle(this);
+    const ret = computedStyles.getPropertyValue("--grid-in-color").trim();
+    return ret || GRID_IN_COLOR;
+  }
+
   public addConsumer(cons: ElecRoute) {
     // eslint-disable-next-line no-console
     console.log("Importing consumer " + cons.text);
@@ -732,12 +744,13 @@ export class ElecSankey extends LitElement {
       x="${labelMidX}"
       y="${labelMidY + TEXT_PADDING / 2 - FONT_SIZE_PX}">${rate}W</text>
     <rect
+      class="grid"
       id="grid-in-rect"
       x="${startTerminatorX}"
       y="${startTerminatorY}"
       height="${width}"
       width="${x_width}"
-      style="fill:${GRID_IN_COLOR};fill-opacity:1;${RECT_BORDER_STYLE}"
+      style="fill:${this._gridColor()};fill-opacity:1;${RECT_BORDER_STYLE}"
     />
   `;
     return [svgRet, x3, y3];
@@ -756,7 +769,7 @@ export class ElecSankey extends LitElement {
     const svgRet = svg`
     <defs>
       <linearGradient id="grad_grid" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" style="stop-color:${PV_COLOR};stop-opacity:1" />
+        <stop offset="0%" style="stop-color:${this._pvColor()};stop-opacity:1" />
         <stop offset="100%" style="stop-color:${endColor};stop-opacity:1" />
       </linearGradient>
     </defs>
@@ -786,7 +799,7 @@ export class ElecSankey extends LitElement {
     const svgRet = svg`
     <defs>
       <linearGradient id="grad_pv" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" style="stop-color:${GRID_IN_COLOR};stop-opacity:1" />
+        <stop offset="0%" style="stop-color:${this._gridColor()};stop-opacity:1" />
         <stop offset="100%" style="stop-color:${endColor};stop-opacity:1" />
       </linearGradient>
     </defs>
@@ -987,7 +1000,7 @@ export class ElecSankey extends LitElement {
   }
 
   protected _rateInBlendColor(): string {
-    return mixHexes(GRID_IN_COLOR, PV_COLOR, this._gridBlendRatio());
+    return mixHexes(this._gridColor(), this._pvColor(), this._gridBlendRatio());
   }
 
   // protected shouldUpdate(_changedProperties: PropertyValueMap<any> | Map<PropertyKey, unknown>): boolean {
@@ -1112,6 +1125,10 @@ export class ElecSankey extends LitElement {
           path.solar {
             fill: var(--solar-color, #0d6a04);
             stroke: var(--solar-color, #0d6a04);
+          }
+          rect.grid {
+            fill: var(--grid-in-color, #920e83);
+            stroke: var(--grid-in-color, #920e83);
           }
         }
       `,

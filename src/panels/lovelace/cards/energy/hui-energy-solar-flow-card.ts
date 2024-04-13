@@ -377,6 +377,7 @@ export class HuiEnergySolarFlowCard
       }
       elec-sankey {
         --solar-color: var(--energy-solar-color);
+        --grid-in-color: var(--energy-grid-consumption-color);
       }
     `;
   }
