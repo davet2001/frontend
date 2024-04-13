@@ -1,6 +1,7 @@
 /**
  * Todo:
  * remove console statements
+ * SHould attributes be true or false?
  *
  */
 import { LitElement, TemplateResult, css, html, nothing, svg } from "lit";
@@ -260,8 +261,8 @@ function renderActiveRule(
 
 function debugPoint(x: number, y: number, label: string): TemplateResult {
   return svg`
-    <!-- <circle cx="${x}" cy="${y}" r="3" fill="#22DDDD" />
-    <text x="${x - 13}" y="${y - 6}" font-size="10px">${label}</text> -->
+    <circle cx="${x}" cy="${y}" r="3" fill="#22DDDD" />
+    <text x="${x - 13}" y="${y - 6}" font-size="10px">${label}</text>
 `;
 }
 
@@ -299,6 +300,9 @@ export class ElecSankey extends LitElement {
 
   @property({ attribute: false })
   public gridInRoute?: ElecRoute;
+
+  @property({ type: Object })
+  public gridInIcon?: TemplateResult;
 
   @property()
   public consumerRoutes: { [id: string]: ElecRoute } = {};
@@ -712,9 +716,9 @@ export class ElecSankey extends LitElement {
   protected renderGridInFlow(
     topRightX: number,
     topRightY: number
-  ): [TemplateResult, number, number] {
+  ): [TemplateResult, TemplateResult, number, number] {
     if (!this.gridInRoute) {
-      return [svg``, topRightX, topRightY];
+      return [nothing, svg``, topRightX, topRightY];
     }
     const width = this._gridInFlowWidth();
 
@@ -725,17 +729,41 @@ export class ElecSankey extends LitElement {
     const x3 = topRightX;
     const y3 = topRightY + width;
     const rate = Math.round(this.gridInRoute.rate);
-    const labelMidX = startTerminatorX - ICON_SIZE_PX * 2;
-    const labelMidY = startTerminatorY + width / 2;
+    const midX = startTerminatorX - ICON_SIZE_PX * 2;
+    const midY = startTerminatorY + width / 2;
+
+    const iconX = midX - ICON_SIZE_PX / 2;
+    const iconY = midY - (ICON_SIZE_PX + TEXT_PADDING + FONT_SIZE_PX) / 2;
+
+    // iconX = 0;
+    // iconY = 0;
+    const svgIcon = false /* this.gridInIcon */
+      ? nothing
+      : svg`
+      <svg x=${iconX} y=${iconY}>
+        <path d=${mdiTransmissionTower} />
+      </svg>`;
+
+    const divRet = this.gridInIcon
+      ? html`<div
+          style="border:1px solid black;position: absolute; left: ${iconX}px;   top: ${iconY}px;"
+        >
+          ${this.gridInIcon}
+        </div>`
+      : nothing;
+    /*
+          style="border:1px solid black;position: relative; top:
+          ${labelMidY -
+          ICON_SIZE_PX * 2 -
+          TEXT_PADDING / 2}px; left: ${labelMidX - ICON_SIZE_PX / 2}px;"
+*/
     const svgRet = svg`
-    <svg
-      x="${labelMidX - ICON_SIZE_PX / 2}"
-      y="${labelMidY - ICON_SIZE_PX * 2 - TEXT_PADDING / 2}">
-      <path d="${mdiTransmissionTower}" />
-    </svg>
+    ${svgIcon}
     <text text-anchor="middle"
-      x="${labelMidX}"
-      y="${labelMidY + TEXT_PADDING / 2 - FONT_SIZE_PX}">${rate}W</text>
+      x="${midX}"
+      y="${
+        iconY + ICON_SIZE_PX + TEXT_PADDING + FONT_SIZE_PX / 2
+      }">${rate}W</text>
     <rect
       class="grid"
       id="grid-in-rect"
@@ -744,8 +772,10 @@ export class ElecSankey extends LitElement {
       height="${width}"
       width="${x_width}"
     />
+    ${debugPoint(iconX, iconY, "iconX,iconY")}
+    ${debugPoint(midX, midY, "labelMidX,labelMidY")}
   `;
-    return [svgRet, x3, y3];
+    return [divRet, svgRet, x3, y3];
   }
 
   protected renderPVInBlendFlow(
@@ -890,8 +920,8 @@ export class ElecSankey extends LitElement {
     <polygon points="${xEnd + terminatorLength},${yEnd - width / 2}
       ${xEnd + terminatorLength},${yEnd + width / 2}
       ${xEnd + terminatorLength + ARROW_HEAD_LENGTH},${yEnd}"
-      style="fill:${color};stroke:none" />
-    <text x="${xText}" y="${yText}" fill="black" font-size="${FONT_SIZE_PX}px">${
+      style="fill:${color}" />
+    <text x="${xText}" y="${yText}" font-size="${FONT_SIZE_PX}px">${
       consumer.text
     }</text>
     ${svgRule}
@@ -1042,7 +1072,7 @@ export class ElecSankey extends LitElement {
   protected render(): TemplateResult {
     if (this.gridInRoute === undefined) {
       return html`<svg width="100%" height="80px">
-        <text x="90" y="20" fill="black" font-size="${FONT_SIZE_PX}px">
+        <text x="90" y="20" font-size="${FONT_SIZE_PX}px">
           "Grid in unspecified!"
         </text>
       </svg>`;
@@ -1063,7 +1093,7 @@ export class ElecSankey extends LitElement {
       x10,
       y10
     );
-    const [gridInFlowSvg, x3, y3] = this.renderGridInFlow(x2, y2);
+    const [gridInDiv, gridInFlowSvg, x3, y3] = this.renderGridInFlow(x2, y2);
     const blendColor = this._rateInBlendColor();
 
     const [pvInBlendFlowSvg, x4, y4] = this.renderPVInBlendFlow(
@@ -1087,19 +1117,22 @@ export class ElecSankey extends LitElement {
     );
 
     const ymax = Math.max(y5, y8);
-    return html` <svg width="100%" height=${ymax}>
-      <text x="90" y="20" fill="black" font-size="${FONT_SIZE_PX}px">
-        ${this.graphTitle}
-      </text>
+    return html`<div style="border:1px solid black;position: relative;">
+      ${gridInDiv}
+      <svg width="100%" height=${ymax}>
+        <text x="90" y="20" font-size="${FONT_SIZE_PX}px">
+          ${this.graphTitle}
+        </text>
 
-      ${pvInFlowSvg} ${generationToGridFlowSvg} ${gridInFlowSvg}
-      ${pvInBlendFlowSvg} ${gridInBlendFlowSvg} ${blendedFlowPreFanOut}
-      ${consOutFlowsSvg} ${debugPoint(x0, y0, "x0,y0")}
-      ${debugPoint(x1, y1, "x1,y1")} ${debugPoint(x2, y2, "x2,y2")}
-      ${debugPoint(x3, y3, "x3,y3")} ${debugPoint(x4, y4, "x4,y4")}
-      ${debugPoint(x5, y5, "x5,y5")} ${debugPoint(x6, y6, "x6,y6")}
-      ${debugPoint(x7, y7, "x7,y7")} ${debugPoint(x10, y10, "x10,y10")}
-    </svg>`;
+        ${pvInFlowSvg} ${generationToGridFlowSvg} ${gridInFlowSvg}
+        ${pvInBlendFlowSvg} ${gridInBlendFlowSvg} ${blendedFlowPreFanOut}
+        ${consOutFlowsSvg} ${debugPoint(x0, y0, "x0,y0")}
+        ${debugPoint(x1, y1, "x1,y1")} ${debugPoint(x2, y2, "x2,y2")}
+        ${debugPoint(x3, y3, "x3,y3")} ${debugPoint(x4, y4, "x4,y4")}
+        ${debugPoint(x5, y5, "x5,y5")} ${debugPoint(x6, y6, "x6,y6")}
+        ${debugPoint(x7, y7, "x7,y7")} ${debugPoint(x10, y10, "x10,y10")}
+      </svg>
+    </div>`;
   }
 
   static get styles() {
@@ -1107,12 +1140,15 @@ export class ElecSankey extends LitElement {
       css`
         svg {
           rect {
-            stroke: #000000;
+            stroke: none; //#000000;
             stroke-width: 0;
           }
           path {
-            stroke: #000000;
+            stroke: none; //#000000;
             stroke-width: 0;
+          }
+          polygon {
+            stroke: none;
           }
           path.flow {
             fill: gray;

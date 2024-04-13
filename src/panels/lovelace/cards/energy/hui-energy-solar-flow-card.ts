@@ -13,6 +13,7 @@ import { UnsubscribeFunc } from "home-assistant-js-websocket";
 import { css, html, LitElement, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators";
 import { classMap } from "lit/directives/class-map";
+import { mdiTransmissionTower } from "@mdi/js";
 
 import "../../../../components/chart/ha-chart-base";
 import "../../../../components/ha-card";
@@ -97,6 +98,9 @@ export class HuiEnergySolarFlowCard
     //     this._data.stats,
     //     types.grid![0].flow_from.map((flow) => flow.stat_energy_from)
     //   ) ?? 0;
+    const gridInIcon = html`<ha-svg-icon
+      .path=${mdiTransmissionTower}
+    ></ha-svg-icon>`;
 
     return html`
       <ha-card>
@@ -110,6 +114,7 @@ export class HuiEnergySolarFlowCard
         >
           <elec-sankey
             .gridInRoute=${this._gridInRoute ? this._gridInRoute : undefined}
+            .gridInIcon=${gridInIcon}
             .generationInRoutes=${this._generationInRoutes
               ? this._generationInRoutes
               : undefined}
@@ -118,6 +123,7 @@ export class HuiEnergySolarFlowCard
       </ha-card>
     `;
   }
+  // .gridInIcon=${gridInIcon}
 
   private async _getStatistics(energyData: EnergyData): Promise<void> {
     const solarSources: SolarSourceTypeEnergyPreference[] =
@@ -176,7 +182,7 @@ export class HuiEnergySolarFlowCard
       );
 
       const value =
-        123 ??
+        // 123 ??
         calculateStatisticsSumGrowth(energyData.stats, [
           source.stat_energy_from,
         ]);
@@ -378,6 +384,10 @@ export class HuiEnergySolarFlowCard
       elec-sankey {
         --solar-color: var(--energy-solar-color);
         --grid-in-color: var(--energy-grid-consumption-color);
+        --icon-primary-color: var(--icon-primary-color);
+      }
+      ha-svg-icon {
+        --icon-primary-color: var(--icon-primary-color);
       }
     `;
   }
