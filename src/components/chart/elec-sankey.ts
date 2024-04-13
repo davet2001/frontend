@@ -211,7 +211,7 @@ function renderFlowByCorners(
       C ${bezierStartLX},${bezierStartLY} ${bezierEndLX},${bezierEndLY} ${endLX},${endLY}
       L ${endRX},${endRY}
       C ${bezierEndRX},${bezierEndRY} ${bezierStartRX},${bezierStartRY} ${startRX},${startRY} Z"
-      style="${fillspec};fill-opacity:1"
+      style="${fillspec}"
   />
   <!-- <circle cx="${pointAX}" cy="${pointAY}" r="5" fill="#22DDDD" />
   <circle cx="${pointBX}" cy="${pointBY}" r="5" fill="#22DDDD" />
@@ -700,12 +700,11 @@ export class ElecSankey extends LitElement {
     return svg`
     ${generatedFlowPath}
     <rect
-      id="grid-rect"
+      class="solar"
       x="${GRID_ORIGIN_X}"
       y="${y10}"
       height="${width}"
       width="${x10 - GRID_ORIGIN_X}"
-      style="fill:${PV_COLOR};fill-opacity:1"
     />
   `;
   }
@@ -744,7 +743,6 @@ export class ElecSankey extends LitElement {
       y="${startTerminatorY}"
       height="${width}"
       width="${x_width}"
-      style="fill:${this._gridColor()};fill-opacity:1"
     />
   `;
     return [svgRet, x3, y3];
@@ -774,7 +772,6 @@ export class ElecSankey extends LitElement {
       height="${width}"
       width="${BLEND_LENGTH + 1}"
       fill="url(#grad_grid)"
-      style="fill-opacity:1"
     />
   `;
     return [svgRet, x4, y4];
@@ -1123,6 +1120,10 @@ export class ElecSankey extends LitElement {
           path.solar {
             fill: var(--solar-color, #0d6a04);
             stroke: var(--solar-color, #0d6a04);
+            stroke-width: 0;
+          }
+          rect.solar {
+            fill: var(--solar-color, #0d6a04);
             stroke-width: 0;
           }
           rect.grid {
