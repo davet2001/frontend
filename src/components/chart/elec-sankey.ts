@@ -3,7 +3,7 @@
  * remove console statements
  *
  */
-import { LitElement, TemplateResult, html, nothing, svg } from "lit";
+import { LitElement, TemplateResult, css, html, nothing, svg } from "lit";
 
 import {
   mdiSolarPower,
@@ -139,7 +139,8 @@ function renderFlowByCorners(
   endLY: number,
   endRX: number,
   endRY: number,
-  color: string = PV_COLOR
+  classname: string = "",
+  color: string | null = null
 ): TemplateResult {
   // Don't attempt to draw curves for very narrow lines
   if (
@@ -208,14 +209,15 @@ function renderFlowByCorners(
   const [bezierEndLX, bezierEndLY, ,] = ret2;
   const [bezierEndRX, bezierEndRY, ,] = ret3;
   const [bezierStartRX, bezierStartRY, ,] = ret4;
-
+  const fillspec = color ? "fill:" + color : "";
   const svg_ret = svg`
   <path
+      class="flow ${classname}"
       d="M ${startLX},${startLY}
       C ${bezierStartLX},${bezierStartLY} ${bezierEndLX},${bezierEndLY} ${endLX},${endLY}
       L ${endRX},${endRY}
       C ${bezierEndRX},${bezierEndRY} ${bezierStartRX},${bezierStartRY} ${startRX},${startRY} Z"
-      style="fill:${color};fill-opacity:1;${RECT_BORDER_STYLE}"
+      style="${fillspec};fill-opacity:1;${RECT_BORDER_STYLE}"
   />
   <!-- <circle cx="${pointAX}" cy="${pointAY}" r="5" fill="#22DDDD" />
   <circle cx="${pointBX}" cy="${pointBY}" r="5" fill="#22DDDD" />
@@ -631,7 +633,8 @@ export class ElecSankey extends LitElement {
             xB + width,
             startTerminatorY + TERMINATOR_BLOCK_LENGTH,
             xB,
-            startTerminatorY + TERMINATOR_BLOCK_LENGTH
+            startTerminatorY + TERMINATOR_BLOCK_LENGTH,
+            "solar"
           )
         );
         svgArray.push(svg`
@@ -658,7 +661,7 @@ export class ElecSankey extends LitElement {
       y1,
       x2,
       y2,
-      PV_COLOR
+      "solar"
     );
     const svgRet = svg`
     ${svgArray}
@@ -875,6 +878,7 @@ export class ElecSankey extends LitElement {
       topRightY,
       topRightX,
       topRightY + width,
+      "consumer",
       color
     );
     const svgRet = svg`
@@ -1095,6 +1099,23 @@ export class ElecSankey extends LitElement {
         ${debugPoint(x5, y5, "x5,y5")} ${debugPoint(x6, y6, "x6,y6")}
         ${debugPoint(x7, y7, "x7,y7")} ${debugPoint(x10, y10, "x10,y10")}
       </svg>`;
+  }
+
+  static get styles() {
+    return [
+      // super.styles,
+      css`
+        svg {
+          path.flow {
+            fill: gray;
+          }
+          path.solar {
+            fill: var(--solar-color, #0d6a04);
+            stroke: var(--solar-color, #0d6a04);
+          }
+        }
+      `,
+    ];
   }
 }
 
