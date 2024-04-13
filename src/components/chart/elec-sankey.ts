@@ -40,12 +40,6 @@ const GRID_ORIGIN_X = 80;
 const RULE_ICON_SIZE = 30;
 const RULE_ICON_COLOR = "#4b067c";
 
-const BORDERS = false; // Turn on to debug layout issues.
-
-const RECT_BORDER_STYLE = BORDERS
-  ? "stroke:#000000;stroke-width:1"
-  : "stroke:none";
-
 export interface ElecRoute {
   id: string;
   text: string;
@@ -217,7 +211,7 @@ function renderFlowByCorners(
       C ${bezierStartLX},${bezierStartLY} ${bezierEndLX},${bezierEndLY} ${endLX},${endLY}
       L ${endRX},${endRY}
       C ${bezierEndRX},${bezierEndRY} ${bezierStartRX},${bezierStartRY} ${startRX},${startRY} Z"
-      style="${fillspec};fill-opacity:1;${RECT_BORDER_STYLE}"
+      style="${fillspec};fill-opacity:1"
   />
   <!-- <circle cx="${pointAX}" cy="${pointAY}" r="5" fill="#22DDDD" />
   <circle cx="${pointBX}" cy="${pointBY}" r="5" fill="#22DDDD" />
@@ -711,7 +705,7 @@ export class ElecSankey extends LitElement {
       y="${y10}"
       height="${width}"
       width="${x10 - GRID_ORIGIN_X}"
-      style="fill:${PV_COLOR};fill-opacity:1;${RECT_BORDER_STYLE}"
+      style="fill:${PV_COLOR};fill-opacity:1"
     />
   `;
   }
@@ -750,7 +744,7 @@ export class ElecSankey extends LitElement {
       y="${startTerminatorY}"
       height="${width}"
       width="${x_width}"
-      style="fill:${this._gridColor()};fill-opacity:1;${RECT_BORDER_STYLE}"
+      style="fill:${this._gridColor()};fill-opacity:1"
     />
   `;
     return [svgRet, x3, y3];
@@ -780,7 +774,7 @@ export class ElecSankey extends LitElement {
       height="${width}"
       width="${BLEND_LENGTH + 1}"
       fill="url(#grad_grid)"
-      style="fill-opacity:1;${RECT_BORDER_STYLE}"
+      style="fill-opacity:1"
     />
   `;
     return [svgRet, x4, y4];
@@ -810,7 +804,7 @@ export class ElecSankey extends LitElement {
       height="${width}"
       width="${BLEND_LENGTH + 1}"
       fill="url(#grad_pv)"
-      style="fill-opacity:1;${RECT_BORDER_STYLE}"
+      style="fill-opacity:1"
     />
   `;
     return [svgRet, x5, y5];
@@ -834,7 +828,7 @@ export class ElecSankey extends LitElement {
       y="${y4}"
       height="${y5 - y4}"
       width="${BLEND_LENGTH_PRE_FAN_OUT + 1}"
-      style="fill:${color};fill-opacity:1;${RECT_BORDER_STYLE}"
+      style="fill:${color};fill-opacity:1"
     />
   `;
     return [svgRet, x6, y6, x7, y7];
@@ -868,7 +862,7 @@ export class ElecSankey extends LitElement {
     <rect
       x="${topRightX}" y="${topRightY}"
       height="${width}" width="${terminatorLength}"
-      style="fill:${color};${RECT_BORDER_STYLE}"
+      style="fill:${color}"
     />
     ${
       rule ? renderActiveRule(xEnd + RULE_ICON_SIZE, yEnd, rule.state) : nothing
@@ -1049,8 +1043,6 @@ export class ElecSankey extends LitElement {
   }
 
   protected render(): TemplateResult {
-    // eslint-disable-next-line no-console
-    console.log("Inner render");
     if (this.gridInRoute === undefined) {
       return html`<svg width="100%" height="80px">
         <text x="90" y="20" fill="black" font-size="${FONT_SIZE_PX}px">
@@ -1098,37 +1090,43 @@ export class ElecSankey extends LitElement {
     );
 
     const ymax = Math.max(y5, y8);
-    return html`<p>Inner render</p>
-      <svg width="100%" height=${ymax}>
-        <text x="90" y="20" fill="black" font-size="${FONT_SIZE_PX}px">
-          ${this.graphTitle}
-        </text>
+    return html` <svg width="100%" height=${ymax}>
+      <text x="90" y="20" fill="black" font-size="${FONT_SIZE_PX}px">
+        ${this.graphTitle}
+      </text>
 
-        ${pvInFlowSvg} ${generationToGridFlowSvg} ${gridInFlowSvg}
-        ${pvInBlendFlowSvg} ${gridInBlendFlowSvg} ${blendedFlowPreFanOut}
-        ${consOutFlowsSvg} ${debugPoint(x0, y0, "x0,y0")}
-        ${debugPoint(x1, y1, "x1,y1")} ${debugPoint(x2, y2, "x2,y2")}
-        ${debugPoint(x3, y3, "x3,y3")} ${debugPoint(x4, y4, "x4,y4")}
-        ${debugPoint(x5, y5, "x5,y5")} ${debugPoint(x6, y6, "x6,y6")}
-        ${debugPoint(x7, y7, "x7,y7")} ${debugPoint(x10, y10, "x10,y10")}
-      </svg>`;
+      ${pvInFlowSvg} ${generationToGridFlowSvg} ${gridInFlowSvg}
+      ${pvInBlendFlowSvg} ${gridInBlendFlowSvg} ${blendedFlowPreFanOut}
+      ${consOutFlowsSvg} ${debugPoint(x0, y0, "x0,y0")}
+      ${debugPoint(x1, y1, "x1,y1")} ${debugPoint(x2, y2, "x2,y2")}
+      ${debugPoint(x3, y3, "x3,y3")} ${debugPoint(x4, y4, "x4,y4")}
+      ${debugPoint(x5, y5, "x5,y5")} ${debugPoint(x6, y6, "x6,y6")}
+      ${debugPoint(x7, y7, "x7,y7")} ${debugPoint(x10, y10, "x10,y10")}
+    </svg>`;
   }
 
   static get styles() {
     return [
-      // super.styles,
       css`
         svg {
+          rect {
+            stroke: #000000;
+            stroke-width: 0;
+          }
+          path {
+            stroke: #000000;
+            stroke-width: 0;
+          }
           path.flow {
             fill: gray;
           }
           path.solar {
             fill: var(--solar-color, #0d6a04);
             stroke: var(--solar-color, #0d6a04);
+            stroke-width: 0;
           }
           rect.grid {
             fill: var(--grid-in-color, #920e83);
-            stroke: var(--grid-in-color, #920e83);
           }
         }
       `,
