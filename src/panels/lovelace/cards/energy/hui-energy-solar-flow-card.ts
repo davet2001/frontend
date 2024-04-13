@@ -8,12 +8,13 @@
  *
  * - Fix warnings
  */
+import { mdiTransmissionTower } from "@mdi/js";
 import { endOfToday, startOfToday } from "date-fns/esm";
 import { UnsubscribeFunc } from "home-assistant-js-websocket";
 import { css, html, LitElement, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators";
 import { classMap } from "lit/directives/class-map";
-import { mdiTransmissionTower } from "@mdi/js";
+import { formatNumber } from "../../../../common/number/format_number";
 
 import "../../../../components/chart/ha-chart-base";
 import "../../../../components/ha-card";
@@ -98,9 +99,12 @@ export class HuiEnergySolarFlowCard
     //     this._data.stats,
     //     types.grid![0].flow_from.map((flow) => flow.stat_energy_from)
     //   ) ?? 0;
-    const gridInIcon = html`<ha-svg-icon
-      .path=${mdiTransmissionTower}
-    ></ha-svg-icon>`;
+    const gridInLabel = html`<div>
+      <ha-svg-icon .path=${mdiTransmissionTower}></ha-svg-icon>
+      <br />${this._gridInRoute
+        ? formatNumber(this._gridInRoute.rate)
+        : "??"}kWh
+    </div>`;
 
     return html`
       <ha-card>
@@ -114,7 +118,7 @@ export class HuiEnergySolarFlowCard
         >
           <elec-sankey
             .gridInRoute=${this._gridInRoute ? this._gridInRoute : undefined}
-            .gridInIcon=${gridInIcon}
+            .gridInHTML=${gridInLabel}
             .generationInRoutes=${this._generationInRoutes
               ? this._generationInRoutes
               : undefined}

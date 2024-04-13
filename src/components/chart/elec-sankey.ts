@@ -302,7 +302,7 @@ export class ElecSankey extends LitElement {
   public gridInRoute?: ElecRoute;
 
   @property({ type: Object })
-  public gridInIcon?: TemplateResult;
+  public gridInHTML?: TemplateResult;
 
   @property()
   public consumerRoutes: { [id: string]: ElecRoute } = {};
@@ -744,11 +744,11 @@ export class ElecSankey extends LitElement {
         <path d=${mdiTransmissionTower} />
       </svg>`;
 
-    const divRet = this.gridInIcon
+    const divRet = this.gridInHTML
       ? html`<div
           style="border:1px solid black;position: absolute; left: ${iconX}px;   top: ${iconY}px;"
         >
-          ${this.gridInIcon}
+          ${this.gridInHTML}
         </div>`
       : nothing;
     /*
