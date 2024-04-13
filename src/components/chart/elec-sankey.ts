@@ -29,7 +29,7 @@ const BLEND_LENGTH = 100;
 const BLEND_LENGTH_PRE_FAN_OUT = 30;
 
 const ARROW_HEAD_LENGTH = 10;
-const TEXT_PADDING = 10;
+const TEXT_PADDING = 8;
 const FONT_SIZE_PX = 16;
 const ICON_SIZE_PX = 24;
 
@@ -43,8 +43,9 @@ const RULE_ICON_COLOR = "#4b067c";
 
 export interface ElecRoute {
   id: string;
-  text: string;
+  text?: string;
   rate: number;
+  icon?: string;
 }
 export interface Thrift {
   testNumber: number;
@@ -500,6 +501,18 @@ export class ElecSankey extends LitElement {
     return ret || GRID_IN_COLOR;
   }
 
+  protected _generateIconLabelDiv(icon: string, value: number): TemplateResult {
+    return html`
+      <div>
+        <svg x="0" y="0" height=${ICON_SIZE_PX}>
+          <path d=${icon} />
+        </svg>
+        <br />
+        ${value}kWh
+      </div>
+    `;
+  }
+
   public addConsumer(cons: ElecRoute) {
     // eslint-disable-next-line no-console
     console.log("Importing consumer " + cons.text);
@@ -602,7 +615,7 @@ export class ElecSankey extends LitElement {
     y1: number,
     x2: number,
     y2: number
-  ): [TemplateResult] {
+  ): [TemplateResult[], TemplateResult] {
     const totalGenWidth = this._totalGenerationWidth();
     // const widthToConsumers = this._generationToConsumersFlowWidth();
     const widthToGrid = this._generationToGridFlowWidth();
@@ -622,6 +635,7 @@ export class ElecSankey extends LitElement {
     let xA = PV_ORIGIN_X - fanOutWidth / 2;
     let xB = PV_ORIGIN_X - totalGenWidth / 2;
     const svgArray: TemplateResult[] = [];
+    const divArray: TemplateResult[] = [];
 
     const startTerminatorY = PV_ORIGIN_Y;
 
@@ -647,16 +661,37 @@ export class ElecSankey extends LitElement {
             "solar"
           )
         );
+        const iconX = xA + width / 2;
+        const iconY = PV_ORIGIN_Y - TEXT_PADDING;
+        const midX = xA + width / 2;
+        const midY =
+          PV_ORIGIN_Y -
+          TEXT_PADDING -
+          (ICON_SIZE_PX + TEXT_PADDING + FONT_SIZE_PX) / 2;
+
         svgArray.push(svg`
-        <text text-anchor="middle" x="${xA + width / 2}" y="${
+        <text text-anchor="middle" x="${midX}" y="${
           PV_ORIGIN_Y - TEXT_PADDING
-        }">${rate}W</text>
+        }">${rate}WR</text>
         <svg
-          x="${xA + width / 2 - ICON_SIZE_PX / 2}"
-          y="${PV_ORIGIN_Y - TEXT_PADDING * 2 - ICON_SIZE_PX - FONT_SIZE_PX}">
+          x="${midX - ICON_SIZE_PX / 2}"
+          y="${midY - (ICON_SIZE_PX + TEXT_PADDING + FONT_SIZE_PX) / 2}">
           <path d="${mdiSolarPower}" />
         </svg>
-      `);
+        `);
+
+        const icon = routes[key].icon;
+        if (icon) {
+          divArray.push(
+            html`<div
+              width=${ICON_SIZE_PX * 2}
+              class="elecroute-label"
+              style="left: ${iconX}px; top: ${iconY}px;"
+            >
+              ${this._generateIconLabelDiv(icon, rate)}
+            </div>`
+          );
+        }
         xA += width + GENERATION_FAN_OUT_HORIZONTAL_GAP;
         xB += width;
       }
@@ -676,8 +711,8 @@ export class ElecSankey extends LitElement {
     const svgRet = svg`
     ${svgArray}
     ${generatedFlowPath2}
-  `;
-    return [svgRet];
+    `;
+    return [divArray, svgRet];
   }
 
   protected renderGenerationToGridFlow(
@@ -716,7 +751,7 @@ export class ElecSankey extends LitElement {
   protected renderGridInFlow(
     topRightX: number,
     topRightY: number
-  ): [TemplateResult, TemplateResult, number, number] {
+  ): [TemplateResult | null, TemplateResult, number, number] {
     if (!this.gridInRoute) {
       return [nothing, svg``, topRightX, topRightY];
     }
@@ -737,33 +772,29 @@ export class ElecSankey extends LitElement {
 
     // iconX = 0;
     // iconY = 0;
-    const svgIcon = false /* this.gridInIcon */
-      ? nothing
-      : svg`
-      <svg x=${iconX} y=${iconY}>
-        <path d=${mdiTransmissionTower} />
-      </svg>`;
+    // const svgIcon = this.gridInRoute.html
+    //   ? nothing
+    //   : svg`
+    //   <svg x=${iconX} y=${iconY}>
+    //     <path d=${mdiTransmissionTower} />
+    //   </svg>`;
 
-    const divRet = this.gridInHTML
-      ? html`<div
-          style="border:1px solid black;position: absolute; left: ${iconX}px;   top: ${iconY}px;"
-        >
-          ${this.gridInHTML}
-        </div>`
-      : nothing;
-    /*
-          style="border:1px solid black;position: relative; top:
-          ${labelMidY -
-          ICON_SIZE_PX * 2 -
-          TEXT_PADDING / 2}px; left: ${labelMidX - ICON_SIZE_PX / 2}px;"
-*/
+    // const divRet = this._generateIconLabelDiv(mdiTransmissionTower, 99);
+
+    const divRet = html`<div
+      width=${ICON_SIZE_PX * 2}
+      class="elecroute-label"
+      style="left: ${iconX}px; top: ${iconY}px;"
+    >
+      ${this._generateIconLabelDiv(mdiTransmissionTower, rate)}
+    </div>`;
+
+    // <text text-anchor="middle"
+    // x="${midX}"
+    // y="${
+    //   iconY + ICON_SIZE_PX + TEXT_PADDING + FONT_SIZE_PX / 2
+    // }">${rate}WF</text>
     const svgRet = svg`
-    ${svgIcon}
-    <text text-anchor="middle"
-      x="${midX}"
-      y="${
-        iconY + ICON_SIZE_PX + TEXT_PADDING + FONT_SIZE_PX / 2
-      }">${rate}W</text>
     <rect
       class="grid"
       id="grid-in-rect"
@@ -1080,7 +1111,7 @@ export class ElecSankey extends LitElement {
     this._updateRateToWidthMultiplier();
 
     const [x0, y0, x1, y1, x2, y2, x10, y10] = this._calc_xy();
-    const [pvInFlowSvg] = this.renderGenerationToConsumersFlow(
+    const [pvInFlowDiv, pvInFlowSvg] = this.renderGenerationToConsumersFlow(
       x0,
       x1,
       y1,
@@ -1116,9 +1147,16 @@ export class ElecSankey extends LitElement {
       true
     );
 
+    const arr = Array.from(pvInFlowDiv);
+    // eslint-disable-next-line no-console
+    console.log("pvInFlowDiv elements");
+    arr.forEach((element) => {
+      // eslint-disable-next-line no-console
+      console.log("pvInFlowDiv element=" + element.toString());
+    });
     const ymax = Math.max(y5, y8);
     return html`<div style="border:1px solid black;position: relative;">
-      ${gridInDiv}
+      ${gridInDiv} ${pvInFlowDiv}
       <svg width="100%" height=${ymax}>
         <text x="90" y="20" font-size="${FONT_SIZE_PX}px">
           ${this.graphTitle}
@@ -1138,6 +1176,12 @@ export class ElecSankey extends LitElement {
   static get styles() {
     return [
       css`
+        div {
+          .elecroute-label {
+            position: absolute;
+            border: 1px solid black;
+          }
+        }
         svg {
           rect {
             stroke: none; //#000000;

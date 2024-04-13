@@ -8,7 +8,7 @@
  *
  * - Fix warnings
  */
-import { mdiTransmissionTower } from "@mdi/js";
+import { mdiTransmissionTower, mdiSolarPower } from "@mdi/js";
 import { endOfToday, startOfToday } from "date-fns/esm";
 import { UnsubscribeFunc } from "home-assistant-js-websocket";
 import { css, html, LitElement, nothing } from "lit";
@@ -34,6 +34,7 @@ import { LovelaceCard } from "../../types";
 import { EnergySolarGraphCardConfig } from "../types";
 import "../../../../components/chart/elec-sankey";
 import type { ElecRoute } from "../../../../components/chart/elec-sankey";
+import "../../../../components/chart/ha-elec-sankey";
 
 @customElement("hui-energy-solar-flow-card")
 export class HuiEnergySolarFlowCard
@@ -99,12 +100,12 @@ export class HuiEnergySolarFlowCard
     //     this._data.stats,
     //     types.grid![0].flow_from.map((flow) => flow.stat_energy_from)
     //   ) ?? 0;
-    const gridInLabel = html`<div>
-      <ha-svg-icon .path=${mdiTransmissionTower}></ha-svg-icon>
-      <br />${this._gridInRoute
-        ? formatNumber(this._gridInRoute.rate)
-        : "??"}kWh
-    </div>`;
+    // const gridInHTML = html`<div>
+    //   <ha-svg-icon .path=${mdiTransmissionTower}></ha-svg-icon>
+    //   <br />${this._gridInRoute
+    //     ? formatNumber(this._gridInRoute.rate)
+    //     : "??"}kWh
+    // </div>`;
 
     return html`
       <ha-card>
@@ -116,13 +117,14 @@ export class HuiEnergySolarFlowCard
             "has-header": !!this._config.title,
           })}"
         >
-          <elec-sankey
+          <ha-elec-sankey
+            .hass=${this.hass}
             .gridInRoute=${this._gridInRoute ? this._gridInRoute : undefined}
-            .gridInHTML=${gridInLabel}
+            .icon=${mdiTransmissionTower}
             .generationInRoutes=${this._generationInRoutes
               ? this._generationInRoutes
               : undefined}
-          ></elec-sankey>
+          ></ha-elec-sankey>
         </div>
       </ha-card>
     `;
@@ -185,16 +187,15 @@ export class HuiEnergySolarFlowCard
         undefined
       );
 
-      const value =
-        // 123 ??
-        calculateStatisticsSumGrowth(energyData.stats, [
-          source.stat_energy_from,
-        ]);
+      const value = calculateStatisticsSumGrowth(energyData.stats, [
+        source.stat_energy_from,
+      ]);
       if (!(source.stat_energy_from in this._generationInRoutes)) {
         this._generationInRoutes[source.stat_energy_from] = {
           id: source.stat_energy_from,
           text: label,
           rate: value ?? 0,
+          icon: mdiSolarPower,
         };
       } else {
         this._generationInRoutes[source.stat_energy_from].rate = value ?? 0;
