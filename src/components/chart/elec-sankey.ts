@@ -50,13 +50,6 @@ export interface ElecRoute {
   rate: number;
   icon?: string;
 }
-export interface Thrift {
-  testNumber: number;
-  directionPreference: number;
-  gridInRoute: ElecRoute;
-  consumers: ElecRoute[];
-  renewables: ElecRoute[];
-}
 
 // Color mixing from here: https://stackoverflow.com/a/76752232
 function hex2dec(hex: string) {
@@ -324,8 +317,6 @@ export class ElecSankey extends LitElement {
     if (this.gridInRoute === undefined) {
       return 0;
     }
-    // eslint-disable-next-line no-console
-    console.log("totalGridInRate=" + this.gridInRoute.rate);
     return this.gridInRoute.rate;
   }
 
@@ -336,8 +327,6 @@ export class ElecSankey extends LitElement {
         trackedRate += this.consumerRoutes[id].rate;
       }
     }
-    // eslint-disable-next-line no-console
-    console.log("totalTrackedConsumerRate=" + trackedRate);
     return trackedRate;
   }
 
@@ -351,15 +340,11 @@ export class ElecSankey extends LitElement {
       // Not exporting. All energy is going to consumers.
       // @todo support battery charging.
       rate = this._totalGenerationRate() + this._totalGridInRate();
-      // eslint-disable-next-line no-console
-      console.log("untrackedRate1 = " + rate);
     } else {
       // Exporting. Energy is going from generation to grid and consumers.
       // gridInRate is negative in this case.
       // @todo support battery charging.
       rate = this._totalGenerationRate() + this._totalGridInRate();
-      // eslint-disable-next-line no-console
-      console.log("untrackedRate2 = " + rate);
     }
     const untrackedRate = rate - this._totalTrackedConsumerRate();
     // Handle edge cases.
@@ -376,8 +361,6 @@ export class ElecSankey extends LitElement {
       this._untrackedConsumerRoute.rate = untrackedRate;
       this._phantomGenerationInRoute = undefined;
     }
-    // eslint-disable-next-line no-console
-    console.log("untrackedRate = " + rate);
   }
 
   private _rateToWidth(rate: number): number {
@@ -478,94 +461,6 @@ export class ElecSankey extends LitElement {
     `;
   }
 
-  public addConsumer(cons: ElecRoute) {
-    // eslint-disable-next-line no-console
-    console.log("Importing consumer " + cons.text);
-    // let obj:Map<string, string> = JSON.parse(cons);
-
-    this.consumerRoutes[cons.id] = cons;
-    this.requestUpdate();
-  }
-
-  /**
-   * Adds a new grid in source.
-   * Since only one is currently supported, this will replace any existing
-   * grid in source.
-   * @param grid
-   */
-  public addGridIn(grid: ElecRoute) {
-    // eslint-disable-next-line no-console
-    console.log("Importing grid " + grid.text);
-    this.gridInRoute = grid;
-    this._recalculateUntrackedRate();
-    this._updateRateToWidthMultiplier();
-    this.requestUpdate();
-  }
-
-  public addRenewable(renewable: ElecRoute) {
-    // eslint-disable-next-line no-console
-    console.log("Importing renewable " + renewable.text);
-    this.generationInRoutes[renewable.id] = renewable;
-    this._recalculateUntrackedRate();
-    this._updateRateToWidthMultiplier();
-    this.requestUpdate();
-  }
-
-  public updateRouteById(id: string, rate: number) {
-    // eslint-disable-next-line no-console
-    console.log("Change on id=" + id + ", rate= " + rate);
-    if (id in this.consumerRoutes) {
-      this.updateConsumer(id, rate);
-    } else if (id in this.generationInRoutes) {
-      this.updatePv(id, rate);
-    } else if (this.gridInRoute) {
-      if (id === this.gridInRoute.id) {
-        this.updateGrid(id, rate);
-      }
-    }
-  }
-
-  public updateGrid(id: string, rate: number) {
-    if (!this.gridInRoute) {
-      // eslint-disable-next-line no-console
-      console.error("Tried to set grid rate while grid is undefined.");
-      return;
-    }
-    // eslint-disable-next-line no-console
-    console.log("Setting " + id + " to " + rate);
-    this.gridInRoute.rate = rate;
-    this._recalculateUntrackedRate();
-    this._updateRateToWidthMultiplier();
-    this.requestUpdate();
-  }
-
-  public updateConsumer(id: string, rate: number) {
-    if (rate < 0) {
-      // eslint-disable-next-line no-console
-      console.log(
-        "Warning: Negative rate value of " +
-          rate +
-          " for " +
-          id +
-          " was reset to 0."
-      );
-      rate = 0;
-    }
-    this.consumerRoutes[id].rate = rate;
-    // eslint-disable-next-line no-console
-    console.log("Setting " + id + " to " + rate);
-    this._recalculateUntrackedRate();
-    this.requestUpdate();
-  }
-
-  public updatePv(id: string, rate: number) {
-    this.generationInRoutes[id].rate = rate;
-    // eslint-disable-next-line no-console
-    console.log("Setting " + id + " to " + rate);
-    this._recalculateUntrackedRate();
-    this.requestUpdate();
-  }
-
   protected _totalGenerationWidth(): number {
     return this._generationInFlowWidth() + this._phantomGenerationInFlowWidth();
   }
@@ -589,14 +484,8 @@ export class ElecSankey extends LitElement {
     const count =
       Object.keys(this.generationInRoutes).length +
       (this._phantomGenerationInRoute !== undefined ? 1 : 0);
-    // eslint-disable-next-line no-console
-    console.log("Gen Count is " + count);
-    // eslint-disable-next-line no-console
-    console.log("Total width is " + totalGenWidth);
     const fanOutWidth =
       totalGenWidth + (count - 1) * GENERATION_FAN_OUT_HORIZONTAL_GAP;
-    // eslint-disable-next-line no-console
-    console.log("Fan out width is " + fanOutWidth);
     let xA = PV_ORIGIN_X - fanOutWidth / 2;
     let xB = PV_ORIGIN_X - totalGenWidth / 2;
     const svgArray: TemplateResult[] = [];
@@ -996,13 +885,6 @@ export class ElecSankey extends LitElement {
     return mixHexes(this._gridColor(), this._pvColor(), this._gridBlendRatio());
   }
 
-  // protected shouldUpdate(_changedProperties: PropertyValueMap<any> | Map<PropertyKey, unknown>): boolean {
-  //   for (let key in _changedProperties) {
-  //     console.log("shouldUpdate() triggered due to" + key);
-  //   }
-  //   return true;
-  // }
-
   protected _calc_xy(): [
     number,
     number,
@@ -1087,13 +969,6 @@ export class ElecSankey extends LitElement {
       blendColor
     );
 
-    const arr = Array.from(pvInFlowDiv);
-    // eslint-disable-next-line no-console
-    console.log("pvInFlowDiv elements");
-    arr.forEach((element) => {
-      // eslint-disable-next-line no-console
-      console.log("pvInFlowDiv element=" + element.toString());
-    });
     const ymax = Math.max(y5, y8);
     return html`<div style="position: relative;">
       ${gridInDiv} ${pvInFlowDiv} ${consOutFlowsDiv}

@@ -5,10 +5,7 @@
  *   - no consumers
  *   - no grid
  *   - etc
- *
- * - Fix warnings
  */
-import { endOfToday, startOfToday } from "date-fns";
 import { mdiSolarPower } from "@mdi/js";
 import { UnsubscribeFunc } from "home-assistant-js-websocket";
 import { css, html, LitElement, nothing } from "lit";
@@ -45,18 +42,6 @@ export class HuiEnergySolarFlowCard
 
   @state() private _config?: EnergySolarFlowCardConfig;
 
-  // @state() private _chartData: ChartData = {
-  //   datasets: [],
-  // };
-
-  // @state() private _sankey = new ElecSankey();
-
-  @state() private _start = startOfToday();
-
-  @state() private _end = endOfToday();
-
-  @state() private _data?: EnergyData;
-
   @state() private _gridInRoute?: ElecRoute;
 
   @state() private _generationInRoutes: { [id: string]: ElecRoute } = {};
@@ -85,28 +70,6 @@ export class HuiEnergySolarFlowCard
     if (!this.hass || !this._config) {
       return nothing;
     }
-
-    // if (!this._data) {
-    //   return html`${this.hass.localize(
-    //     "ui.panel.lovelace.cards.energy.loading"
-    //   )}`;
-    // }
-
-    // const prefs = this._data.prefs;
-    // const types = energySourcesByType(prefs);
-
-    // const totalFromGrid =
-    //   calculateStatisticsSumGrowth(
-    //     this._data.stats,
-    //     types.grid![0].flow_from.map((flow) => flow.stat_energy_from)
-    //   ) ?? 0;
-    // const gridInHTML = html`<div>
-    //   <ha-svg-icon .path=${mdiTransmissionTower}></ha-svg-icon>
-    //   <br />${this._gridInRoute
-    //     ? formatNumber(this._gridInRoute.rate)
-    //     : "??"}kWh
-    // </div>`;
-
     return html`
       <ha-card>
         ${this._config.title
@@ -129,7 +92,6 @@ export class HuiEnergySolarFlowCard
       </ha-card>
     `;
   }
-  // .gridInIcon=${gridInIcon}
 
   private async _getStatistics(energyData: EnergyData): Promise<void> {
     const solarSources: SolarSourceTypeEnergyPreference[] =
@@ -146,8 +108,6 @@ export class HuiEnergySolarFlowCard
         types.grid![0].flow_from.map((flow) => flow.stat_energy_from)
       ) ?? 0;
 
-    // eslint-disable-next-line no-console
-    console.log("energyData=" + energyData);
     this._gridInRoute = {
       id: "grid-in-all",
       rate: totalFromGrid,
@@ -187,17 +147,6 @@ export class HuiEnergySolarFlowCard
       const value = calculateStatisticsSumGrowth(energyData.stats, [
         consumer.stat_consumption,
       ]);
-      if (!value) {
-        // eslint-disable-next-line no-console
-        console.log(
-          "consumer value is " +
-            value +
-            " for " +
-            consumer.stat_consumption +
-            " : " +
-            label
-        );
-      }
       if (!(consumer.stat_consumption in this._consumerRoutes)) {
         this._consumerRoutes[consumer.stat_consumption] = {
           id: consumer.stat_consumption,
@@ -210,140 +159,6 @@ export class HuiEnergySolarFlowCard
       }
     });
   }
-  // datasets.push(
-  //   ...this._processDataSet(
-  //     energyData.stats,
-  //     energyData.statsMetadata,
-  //     solarSources,
-  //     solarColor,
-  //     computedStyles
-  //   )
-  // );
-
-  // if (energyData.statsCompare) {
-  //   // Add empty dataset to align the bars
-  //   datasets.push({
-  //     order: 0,
-  //     data: [],
-  //   });
-  //   datasets.push({
-  //     order: 999,
-  //     data: [],
-  //     xAxisID: "xAxisCompare",
-  //   });
-
-  //   datasets.push(
-  //     ...this._processDataSet(
-  //       energyData.statsCompare,
-  //       energyData.statsMetadata,
-  //       solarSources,
-  //       solarColor,
-  //       computedStyles,
-  //       true
-  //     )
-  //   );
-  // }
-
-  // if (forecasts) {
-  //   datasets.push(
-  //     ...this._processForecast(
-  //       energyData.statsMetadata,
-  //       forecasts,
-  //       solarSources,
-  //       computedStyles.getPropertyValue("--primary-text-color"),
-  //       energyData.start,
-  //       energyData.end
-  //     )
-  //   );
-  // }
-
-  // this._start = energyData.start;
-  // this._end = energyData.end || endOfToday();
-
-  // this._chartData = {
-  //   datasets,
-  // };
-
-  // private _processDataSet(
-  //   statistics: Statistics,
-  //   statisticsMetaData: Record<string, StatisticsMetaData>,
-  //   solarSources: SolarSourceTypeEnergyPreference[],
-  //   solarColor: string,
-  //   computedStyles: CSSStyleDeclaration,
-  //   compare = false
-  // ) {
-  //   solarSources.forEach((source, idx) => {
-  //     console.log("source=" + source.stat_energy_from);
-
-  //     let borderColor = computedStyles
-  //       .getPropertyValue("--energy-solar-color-" + idx)
-  //       .trim();
-  //     if (borderColor.length === 0) {
-  //       const modifiedColor =
-  //         idx > 0
-  //           ? this.hass.themes.darkMode
-  //             ? labBrighten(rgb2lab(hex2rgb(solarColor)), idx)
-  //             : labDarken(rgb2lab(hex2rgb(solarColor)), idx)
-  //           : undefined;
-  //       borderColor = modifiedColor
-  //         ? rgb2hex(lab2rgb(modifiedColor))
-  //         : solarColor;
-  //     }
-
-  //     let prevStart: number | null = null;
-
-  //     const solarProductionData: ScatterDataPoint[] = [];
-
-  //     // Process solar production data.
-  //     if (source.stat_energy_from in statistics) {
-  //       const stats = statistics[source.stat_energy_from];
-  //       let end;
-
-  //       for (const point of stats) {
-  //         if (point.change === null || point.change === undefined) {
-  //           continue;
-  //         }
-  //         if (prevStart === point.start) {
-  //           continue;
-  //         }
-  //         const date = new Date(point.start);
-  //         solarProductionData.push({
-  //           x: date.getTime(),
-  //           y: point.change,
-  //         });
-  //         prevStart = point.start;
-  //         end = point.end;
-  //       }
-  //       if (solarProductionData.length === 1) {
-  //         solarProductionData.push({
-  //           x: end,
-  //           y: 0,
-  //         });
-  //       }
-  //     }
-
-  //     data.push({
-  //       label: this.hass.localize(
-  //         "ui.panel.lovelace.cards.energy.energy_solar_graph.production",
-  //         {
-  //           name: getStatisticLabel(
-  //             this.hass,
-  //             source.stat_energy_from,
-  //             statisticsMetaData[source.stat_energy_from]
-  //           ),
-  //         }
-  //       ),
-  //       borderColor: compare ? borderColor + "7F" : borderColor,
-  //       backgroundColor: compare ? borderColor + "32" : borderColor + "7F",
-  //       data: solarProductionData,
-  //       order: 1,
-  //       stack: "solar",
-  //       xAxisID: compare ? "xAxisCompare" : undefined,
-  //     });
-  //   });
-
-  //   return data;
-  // }
 
   static get styles() {
     return css`
