@@ -22,7 +22,7 @@ const TERMINATOR_BLOCK_LENGTH = 50;
 const GENERATION_FAN_OUT_HORIZONTAL_GAP = 50;
 const CONSUMERS_FAN_OUT_VERTICAL_GAP = 50;
 const CONSUMERS_FAN_OUT_HORIZONTAL_SPAN = 200;
-const CONSUMERS_LABEL_WIDTH = 100;
+const CONSUMERS_LABEL_WIDTH = 180;
 
 const TARGET_SCALED_TRUNK_WIDTH = 150;
 
@@ -274,7 +274,7 @@ export class ElecSankey extends LitElement {
 
   private _untrackedConsumerRoute: ElecRoute = {
     id: "untracked",
-    text: "Untracked1",
+    text: "Untracked",
     rate: 0,
   };
 
@@ -897,7 +897,7 @@ export class ElecSankey extends LitElement {
     //   2}px 0 0 ${-divWidth / 2}px;"
     // >
 
-    const divHeight = width + CONSUMERS_FAN_OUT_VERTICAL_GAP;
+    const divHeight = width + CONSUMERS_FAN_OUT_VERTICAL_GAP / 2;
     const divWidth = CONSUMERS_LABEL_WIDTH;
     const divRet = html`<div
       class="label elecroute-label-consumer"

@@ -8,8 +8,8 @@
  *
  * - Fix warnings
  */
+import { endOfToday, startOfToday } from "date-fns";
 import { mdiTransmissionTower, mdiSolarPower } from "@mdi/js";
-import { endOfToday, startOfToday } from "date-fns/esm";
 import { UnsubscribeFunc } from "home-assistant-js-websocket";
 import { css, html, LitElement, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators";
@@ -18,6 +18,7 @@ import { classMap } from "lit/directives/class-map";
 import "../../../../components/chart/ha-chart-base";
 import "../../../../components/ha-card";
 import {
+  DeviceConsumptionEnergyPreference,
   EnergyData,
   energySourcesByType,
   getEnergyDataCollection,
@@ -30,7 +31,7 @@ import {
 import { SubscribeMixin } from "../../../../mixins/subscribe-mixin";
 import { HomeAssistant } from "../../../../types";
 import { LovelaceCard } from "../../types";
-import { EnergySolarGraphCardConfig } from "../types";
+import { EnergySolarFlowCardConfig } from "../types";
 import "../../../../components/chart/elec-sankey";
 import type { ElecRoute } from "../../../../components/chart/elec-sankey";
 import "../../../../components/chart/ha-elec-sankey";
@@ -42,7 +43,7 @@ export class HuiEnergySolarFlowCard
 {
   @property({ attribute: false }) public hass!: HomeAssistant;
 
-  @state() private _config?: EnergySolarGraphCardConfig;
+  @state() private _config?: EnergySolarFlowCardConfig;
 
   // @state() private _chartData: ChartData = {
   //   datasets: [],
@@ -76,7 +77,7 @@ export class HuiEnergySolarFlowCard
     return 3;
   }
 
-  public setConfig(config: EnergySolarGraphCardConfig): void {
+  public setConfig(config: EnergySolarFlowCardConfig): void {
     this._config = config;
   }
 
@@ -122,8 +123,8 @@ export class HuiEnergySolarFlowCard
             .icon=${mdiTransmissionTower}
             .generationInRoutes=${this._generationInRoutes
               ? this._generationInRoutes
-              : undefined}
-            .consumerRoutes=${this._consumerRoutes}
+              : {}}
+            .consumerRoutes=${this._consumerRoutes ? this._consumerRoutes : {}}
           ></ha-elec-sankey>
         </div>
       </ha-card>
@@ -149,50 +150,11 @@ export class HuiEnergySolarFlowCard
     // eslint-disable-next-line no-console
     console.log("energyData=" + energyData);
     this._gridInRoute = {
-      id: "grid-in",
+      id: "grid-in-all",
       rate: totalFromGrid,
     };
-    // start of test data
 
-    let newId = "consumer-1";
-    this._consumerRoutes[newId] = {
-      id: newId,
-      rate: 5.5,
-      text: "Consumer 1",
-    };
-    newId = "consumer-2";
-    this._consumerRoutes[newId] = {
-      id: newId,
-      rate: 9.8,
-      text: "Consumer 2",
-    };
-
-    // end of test data
-
-    // const datasets: ChartDataset<"bar" | "line">[] = [];
-
-    // const computedStyles = getComputedStyle(this);
-    // const solarColor = computedStyles
-    //   .getPropertyValue("--energy-solar-color")
-    //   .trim();
-
-    // if (color.length === 0) {
-    //   const modifiedColor =
-    //     idx > 0
-    //       ? this.hass.themes.darkMode
-    //         ? labBrighten(rgb2lab(hex2rgb(solarColor)), idx)
-    //         : labDarken(rgb2lab(hex2rgb(solarColor)), idx)
-    //       : undefined;
-    //   color = modifiedColor ? rgb2hex(lab2rgb(modifiedColor)) : solarColor;
-    // }
     solarSources.forEach((source) => {
-      // console.log("source(" + idx + ")=" + source.stat_energy_from);
-      // let color = computedStyles
-      //   .getPropertyValue("--energy-solar-color")
-      //   .trim();
-
-      // console.log("color=" + color);
-
       const label = getStatisticLabel(
         this.hass,
         source.stat_energy_from,
@@ -212,28 +174,41 @@ export class HuiEnergySolarFlowCard
       } else {
         this._generationInRoutes[source.stat_energy_from].rate = value ?? 0;
       }
-      // const stats = energyData.stats[source.stat_energy_from];
-      // console.log(
-      //   "stats=" +
-      //     label +
-      //     ": " +
-      //     source.stat_energy_from +
-      //     " has " +
-      //     stats.length +
-      //     " entries"
-      // );
-      // energyData.stats[source.stat_energy_from].forEach((point) => {
-      //   console.log(
-      //     "point=" +
-      //       new Date(point.start).toISOString() +
-      //       "-" +
-      //       new Date(point.end).toISOString() +
-      //       " " +
-      //       point.change
-      //   );
-      // });
-      // const points = energyData.stats[source.stat_energy_from];
-      // console.log("points=" + points);
+    });
+
+    const consumers: DeviceConsumptionEnergyPreference[] = energyData.prefs
+      .device_consumption as DeviceConsumptionEnergyPreference[];
+
+    consumers.forEach((consumer) => {
+      const label = getStatisticLabel(
+        this.hass,
+        consumer.stat_consumption,
+        undefined
+      );
+      const value = calculateStatisticsSumGrowth(energyData.stats, [
+        consumer.stat_consumption,
+      ]);
+      if (!value) {
+        // eslint-disable-next-line no-console
+        console.log(
+          "consumer value is " +
+            value +
+            " for " +
+            consumer.stat_consumption +
+            " : " +
+            label
+        );
+      }
+      if (!(consumer.stat_consumption in this._consumerRoutes)) {
+        this._consumerRoutes[consumer.stat_consumption] = {
+          id: consumer.stat_consumption,
+          text: label,
+          rate: value ?? 0,
+          icon: undefined,
+        };
+      } else {
+        this._consumerRoutes[consumer.stat_consumption].rate = value ?? 0;
+      }
     });
   }
   // datasets.push(
