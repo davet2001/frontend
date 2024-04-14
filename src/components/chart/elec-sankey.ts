@@ -6,11 +6,7 @@
  */
 import { LitElement, TemplateResult, css, html, nothing, svg } from "lit";
 
-import {
-  mdiTransmissionTower,
-  mdiElectricSwitch,
-  mdiElectricSwitchClosed,
-} from "@mdi/js";
+import { mdiTransmissionTower } from "@mdi/js";
 
 import { customElement, property } from "lit/decorators";
 
@@ -37,10 +33,7 @@ const PV_ORIGIN_Y = 0 + TEXT_PADDING * 2 + FONT_SIZE_PX + ICON_SIZE_PX;
 
 const GRID_ORIGIN_X = 80;
 
-const RULE_ICON_SIZE = 30;
-const RULE_ICON_COLOR = "#4b067c";
-
-const PAD_ANTIALIAS = 0.5;
+export const PAD_ANTIALIAS = 0.5;
 
 export interface ElecRoute {
   id: string;
@@ -54,12 +47,6 @@ export interface Thrift {
   gridInRoute: ElecRoute;
   consumers: ElecRoute[];
   renewables: ElecRoute[];
-}
-
-interface Rule {
-  // id: string;
-  state: boolean;
-  // Future: add more things here like countdown etc.
 }
 
 // Color mixing from here: https://stackoverflow.com/a/76752232
@@ -222,43 +209,6 @@ function renderFlowByCorners(
   <circle cx="${bezierStartLX}" cy="${bezierStartLY}" r="5" fill="#DDDDDD" /> -->
 `;
   return svg_ret;
-}
-
-/**
- * Renders an active rule as an SVG element at the specified coordinates.
- *
- * @param x - The x-coordinate of the centre of the rule graphic.
- * @param y - The y-coordinate of the centre of the rule graphic.
- * @returns A `TemplateResult` representing the SVG element.
- */
-function renderActiveRule(
-  x: number,
-  y: number,
-  switchState: boolean,
-  size: number = RULE_ICON_SIZE
-): TemplateResult {
-  const SWITCH_SIZE = 80;
-  const switchPath = switchState ? mdiElectricSwitchClosed : mdiElectricSwitch;
-  return svg`
-  <svg
-      x="${x - size / 2}"
-      y="${y - size / 2}"
-      width="${size}"
-      height="${size}"
-      viewBox="0 0 100 100"
-      >
-      <rect ry="30" x="0" y="0" width="100" height="100" fill="${RULE_ICON_COLOR}" />
-      <svg
-        x="${50 - SWITCH_SIZE / 2}"
-        y="${50 - SWITCH_SIZE / 2}"
-        width="${SWITCH_SIZE}"
-        height="${SWITCH_SIZE}"
-        viewBox="0 0 24 24"
-      >
-        <path d="${switchPath}" />
-        </svg>
-    </svg>
-`;
 }
 
 function debugPoint(x: number, y: number, label: string): TemplateResult {
@@ -879,45 +829,14 @@ export class ElecSankey extends LitElement {
     return [svgRet, x6, y6, x7, y7];
   }
 
-  protected _renderRule(
-    topLeftX: number,
-    topLeftY: number,
-    width: number,
-    color: string,
-    rule: Rule
-  ): [number, TemplateResult] {
-    const length = RULE_ICON_SIZE * 2;
-    const svgRule: TemplateResult = svg`
-      <rect
-        x="${topLeftX}" y="${topLeftY}"
-        height="${width}" width="${length + PAD_ANTIALIAS}"
-        style="fill:${color}"
-      />
-      ${
-        rule
-          ? renderActiveRule(
-              topLeftX + RULE_ICON_SIZE,
-              topLeftY + width / 2,
-              rule.state
-            )
-          : nothing
-      }
-    `;
-    return [length, svgRule];
-  }
-
   protected _insertExtras(
-    topLeftX: number,
-    topLeftY: number,
-    width: number,
-    color: string,
-    _: ElecRoute
+    _topLeftX: number,
+    _topLeftY: number,
+    _width: number,
+    _color: string,
+    _route: ElecRoute
   ): [number, TemplateResult] {
     return [0, svg``];
-    const rule: Rule = {
-      state: true,
-    };
-    return this._renderRule(topLeftX, topLeftY, width, color, rule);
   }
 
   protected _renderConsumerFlow(
