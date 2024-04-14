@@ -1095,7 +1095,7 @@ export class ElecSankey extends LitElement {
       console.log("pvInFlowDiv element=" + element.toString());
     });
     const ymax = Math.max(y5, y8);
-    return html`<div style="border:1px solid black;position: relative;">
+    return html`<div style="position: relative;">
       ${gridInDiv} ${pvInFlowDiv} ${consOutFlowsDiv}
       <svg width="100%" height=${ymax}>
         ${pvInFlowSvg} ${generationToGridFlowSvg} ${gridInFlowSvg}
@@ -1114,9 +1114,9 @@ export class ElecSankey extends LitElement {
       css`
         div {
           .label {
-            font-size: 12px;
+            //font-size: 12px;
             position: absolute;
-            border: 1px solid black;
+            // border: 1px solid black;
           }
           .elecroute-label-grid {
             text-align: center;

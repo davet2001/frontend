@@ -17,7 +17,7 @@ export class HaElecSankey extends ElecSankey {
     value: number
   ): TemplateResult {
     return html`
-      <div style="background:gray;">
+      <div class="label-action">
         ${_name || nothing}
         ${icon
           ? html`<ha-svg-icon .path=${icon}> </ha-svg-icon><br />`
@@ -36,6 +36,9 @@ export class HaElecSankey extends ElecSankey {
         .label {
           font-size: 12px;
         }
+        /* .label-action {
+          background-color: gray;
+        } */
       }
     `,
   ];
