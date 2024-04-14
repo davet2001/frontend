@@ -40,6 +40,8 @@ const GRID_ORIGIN_X = 80;
 const RULE_ICON_SIZE = 30;
 const RULE_ICON_COLOR = "#4b067c";
 
+const PAD_ANTIALIAS = 0.5;
+
 export interface ElecRoute {
   id: string;
   text?: string;
@@ -684,9 +686,9 @@ export class ElecSankey extends LitElement {
 
     const generatedFlowPath2 = renderFlowByCorners(
       x0 + totalGenWidth,
-      PV_ORIGIN_Y + TERMINATOR_BLOCK_LENGTH,
+      PV_ORIGIN_Y + TERMINATOR_BLOCK_LENGTH - PAD_ANTIALIAS,
       x0 + widthToGrid,
-      PV_ORIGIN_Y + TERMINATOR_BLOCK_LENGTH,
+      PV_ORIGIN_Y + TERMINATOR_BLOCK_LENGTH - PAD_ANTIALIAS,
       x1,
       y1,
       x2,
@@ -813,10 +815,10 @@ export class ElecSankey extends LitElement {
     </defs>
     <rect
       id="pv-in-blend-rect"
-      x="${x1}"
+      x="${x1 - PAD_ANTIALIAS}"
       y="${y1}"
       height="${width}"
-      width="${BLEND_LENGTH + 1}"
+      width="${BLEND_LENGTH + 2 * PAD_ANTIALIAS}"
       fill="url(#grad_grid)"
     />
   `;
@@ -924,9 +926,9 @@ export class ElecSankey extends LitElement {
       topLeftY,
       topLeftX,
       topLeftY + width,
-      topRightX,
+      topRightX + PAD_ANTIALIAS,
       topRightY,
-      topRightX,
+      topRightX + PAD_ANTIALIAS,
       topRightY + width,
       "consumer",
       color
