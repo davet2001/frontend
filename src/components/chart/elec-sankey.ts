@@ -7,7 +7,6 @@
 import { LitElement, TemplateResult, css, html, nothing, svg } from "lit";
 
 import {
-  mdiSolarPower,
   mdiTransmissionTower,
   mdiElectricSwitch,
   mdiElectricSwitchClosed,
@@ -661,32 +660,18 @@ export class ElecSankey extends LitElement {
             "solar"
           )
         );
-        const iconX = xA + width / 2;
-        const iconY = PV_ORIGIN_Y - TEXT_PADDING;
         const midX = xA + width / 2;
-        const midY =
-          PV_ORIGIN_Y -
-          TEXT_PADDING -
-          (ICON_SIZE_PX + TEXT_PADDING + FONT_SIZE_PX) / 2;
+        const midY = (PV_ORIGIN_Y - 0) / 2;
 
-        svgArray.push(svg`
-        <text text-anchor="middle" x="${midX}" y="${
-          PV_ORIGIN_Y - TEXT_PADDING
-        }">${rate}WR</text>
-        <svg
-          x="${midX - ICON_SIZE_PX / 2}"
-          y="${midY - (ICON_SIZE_PX + TEXT_PADDING + FONT_SIZE_PX) / 2}">
-          <path d="${mdiSolarPower}" />
-        </svg>
-        `);
-
+        const divHeight = PV_ORIGIN_Y - 0;
+        const divWidth = ICON_SIZE_PX * 3;
         const icon = routes[key].icon;
         if (icon) {
           divArray.push(
             html`<div
-              width=${ICON_SIZE_PX * 2}
-              class="elecroute-label"
-              style="left: ${iconX}px; top: ${iconY}px;"
+              class="elecroute-label-horiz"
+              style="width: ${divWidth}px; left: ${midX}px; top: ${midY}px; margin: ${-divHeight /
+              2}px 0 0 ${-divWidth / 2}px;"
             >
               ${this._generateIconLabelDiv(icon, rate)}
             </div>`
@@ -1180,6 +1165,12 @@ export class ElecSankey extends LitElement {
           .elecroute-label {
             position: absolute;
             border: 1px solid black;
+            text-align: center;
+          }
+          .elecroute-label-horiz {
+            position: absolute;
+            border: 1px solid black;
+            text-align: center;
           }
         }
         svg {
