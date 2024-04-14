@@ -879,15 +879,54 @@ export class ElecSankey extends LitElement {
     return [svgRet, x6, y6, x7, y7];
   }
 
+  protected _renderRule(
+    topLeftX: number,
+    topLeftY: number,
+    width: number,
+    color: string,
+    rule: Rule
+  ): [number, TemplateResult] {
+    const length = RULE_ICON_SIZE * 2;
+    const svgRule: TemplateResult = svg`
+      <rect
+        x="${topLeftX}" y="${topLeftY}"
+        height="${width}" width="${length + PAD_ANTIALIAS}"
+        style="fill:${color}"
+      />
+      ${
+        rule
+          ? renderActiveRule(
+              topLeftX + RULE_ICON_SIZE,
+              topLeftY + width / 2,
+              rule.state
+            )
+          : nothing
+      }
+    `;
+    return [length, svgRule];
+  }
+
+  protected _insertExtras(
+    topLeftX: number,
+    topLeftY: number,
+    width: number,
+    color: string,
+    _: ElecRoute
+  ): [number, TemplateResult] {
+    return [0, svg``];
+    const rule: Rule = {
+      state: true,
+    };
+    return this._renderRule(topLeftX, topLeftY, width, color, rule);
+  }
+
   protected _renderConsumerFlow(
     topLeftX: number,
     topLeftY: number,
     topRightX: number,
     topRightY: number,
     consumer: ElecRoute,
-    color: string,
-    rule?: Rule,
-    rulesVisible: boolean = false
+    color: string
   ): [TemplateResult, number, number] {
     let width = this._rateToWidth(consumer.rate);
 
@@ -895,27 +934,6 @@ export class ElecSankey extends LitElement {
     // const yStart = topLeftY + width / 2;
     const xEnd = topRightX;
     const yEnd = topRightY + width / 2;
-
-    // const xDelta = xEnd - xStart;
-    // const yDelta = yEnd - yStart;
-    let terminatorLength: number = 0;
-
-    let svgRule: TemplateResult = svg``;
-    if (rulesVisible) {
-      terminatorLength = RULE_ICON_SIZE * 2;
-      svgRule = svg`
-    <rect
-      x="${topRightX}" y="${topRightY}"
-      height="${width}" width="${terminatorLength}"
-      style="fill:${color}"
-    />
-    ${
-      rule ? renderActiveRule(xEnd + RULE_ICON_SIZE, yEnd, rule.state) : nothing
-    }
-  `;
-    }
-    const xText = xEnd + ARROW_HEAD_LENGTH + TEXT_PADDING + terminatorLength;
-    const yText = yEnd + FONT_SIZE_PX / 4;
 
     if (width < 1) {
       // Prevent invisible lines
@@ -933,16 +951,27 @@ export class ElecSankey extends LitElement {
       "consumer",
       color
     );
+    const [extrasLength, svgExtras] = this._insertExtras(
+      topRightX,
+      topRightY,
+      width,
+      color,
+      consumer
+    );
+
+    const xText = xEnd + ARROW_HEAD_LENGTH + TEXT_PADDING + extrasLength;
+    const yText = yEnd + FONT_SIZE_PX / 4;
+
     const svgRet = svg`
     ${svgFlow}
-    <polygon points="${xEnd + terminatorLength},${yEnd - width / 2}
-      ${xEnd + terminatorLength},${yEnd + width / 2}
-      ${xEnd + terminatorLength + ARROW_HEAD_LENGTH},${yEnd}"
+    ${svgExtras}
+    <polygon points="${xEnd + extrasLength},${yEnd - width / 2}
+      ${xEnd + extrasLength},${yEnd + width / 2}
+      ${xEnd + extrasLength + ARROW_HEAD_LENGTH},${yEnd}"
       style="fill:${color}" />
     <text x="${xText}" y="${yText}" font-size="${FONT_SIZE_PX}px">${
       consumer.text
     }</text>
-    ${svgRule}
   `;
     const bottomLeftY = topLeftY + width;
     const bottomRightY = topRightY + width;
@@ -953,8 +982,7 @@ export class ElecSankey extends LitElement {
     x6: number,
     y6: number,
     y7: number,
-    color: string,
-    displayRules: boolean = false
+    color: string
   ): [Array<TemplateResult>, number] {
     this._recalculateUntrackedRate();
     const svgRetArray: Array<TemplateResult> = [];
@@ -970,33 +998,14 @@ export class ElecSankey extends LitElement {
     let svg_row;
     for (const key in this.consumerRoutes) {
       if (Object.prototype.hasOwnProperty.call(this.consumerRoutes, key)) {
-        // start of test code
-        let rule: Rule;
-        if (displayRules) {
-          rule = { state: true };
-          [svg_row, yLeft, yRight] = this._renderConsumerFlow(
-            xLeft,
-            yLeft,
-            xRight,
-            yRight,
-            this.consumerRoutes[key],
-            color,
-            rule,
-            displayRules
-          );
-        } else {
-          // end of test code
-          [svg_row, yLeft, yRight] = this._renderConsumerFlow(
-            xLeft,
-            yLeft,
-            xRight,
-            yRight,
-            this.consumerRoutes[key],
-            color,
-            undefined,
-            displayRules
-          );
-        }
+        [svg_row, yLeft, yRight] = this._renderConsumerFlow(
+          xLeft,
+          yLeft,
+          xRight,
+          yRight,
+          this.consumerRoutes[key],
+          color
+        );
         svgRetArray.push(svg_row);
         yRight += CONSUMERS_FAN_OUT_VERTICAL_GAP;
       }
@@ -1008,9 +1017,7 @@ export class ElecSankey extends LitElement {
       xRight,
       yRight,
       this._untrackedConsumerRoute,
-      color,
-      undefined,
-      displayRules
+      color
     );
     svgRetArray.push(svg_row);
     yRight += CONSUMERS_FAN_OUT_VERTICAL_GAP;
