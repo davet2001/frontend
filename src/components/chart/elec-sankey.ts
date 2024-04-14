@@ -14,6 +14,7 @@ const TERMINATOR_BLOCK_LENGTH = 50;
 const GENERATION_FAN_OUT_HORIZONTAL_GAP = 50;
 const CONSUMERS_FAN_OUT_VERTICAL_GAP = 50;
 const CONSUMERS_FAN_OUT_HORIZONTAL_SPAN = 200;
+const CONSUMERS_LABEL_WIDTH = 100;
 
 const TARGET_SCALED_TRUNK_WIDTH = 150;
 
@@ -245,7 +246,7 @@ function debugPoint(x: number, y: number, label: string): TemplateResult {
 @customElement("elec-sankey")
 export class ElecSankey extends LitElement {
   @property()
-  public graphTitle?: string = "";
+  public unit: string = "kWh";
 
   @property()
   public generationInRoutes: { [id: string]: ElecRoute } = {};
@@ -452,14 +453,18 @@ export class ElecSankey extends LitElement {
     return ret || GRID_IN_COLOR;
   }
 
-  protected _generateIconLabelDiv(icon: string, value: number): TemplateResult {
+  protected _generateLabelDiv(
+    icon: string | undefined,
+    _name: string | undefined,
+    value: number
+  ): TemplateResult {
     return html`
       <div>
         <svg x="0" y="0" height=${ICON_SIZE_PX}>
           <path d=${icon} />
         </svg>
         <br />
-        ${value}kWh
+        ${value} ${this.unit}
       </div>
     `;
   }
@@ -625,7 +630,7 @@ export class ElecSankey extends LitElement {
               style="width: ${divWidth}px; left: ${midX}px; top: ${midY}px; margin: ${-divHeight /
               2}px 0 0 ${-divWidth / 2}px;"
             >
-              ${this._generateIconLabelDiv(icon, rate)}
+              ${this._generateLabelDiv(icon, undefined, rate)}
             </div>`
           );
         }
@@ -716,14 +721,14 @@ export class ElecSankey extends LitElement {
     //     <path d=${mdiTransmissionTower} />
     //   </svg>`;
 
-    // const divRet = this._generateIconLabelDiv(mdiTransmissionTower, 99);
+    // const divRet = this._generateLabelDiv(mdiTransmissionTower, 99);
 
     const divRet = html`<div
       width=${ICON_SIZE_PX * 2}
       class="elecroute-label"
       style="left: ${iconX}px; top: ${iconY}px;"
     >
-      ${this._generateIconLabelDiv(mdiTransmissionTower, rate)}
+      ${this._generateLabelDiv(mdiTransmissionTower, undefined, rate)}
     </div>`;
 
     // <text text-anchor="middle"
@@ -740,8 +745,6 @@ export class ElecSankey extends LitElement {
       height="${width}"
       width="${x_width}"
     />
-    ${debugPoint(iconX, iconY, "iconX,iconY")}
-    ${debugPoint(midX, midY, "labelMidX,labelMidY")}
   `;
     return [divRet, svgRet, x3, y3];
   }
@@ -846,7 +849,7 @@ export class ElecSankey extends LitElement {
     topRightY: number,
     consumer: ElecRoute,
     color: string
-  ): [TemplateResult, number, number] {
+  ): [TemplateResult, TemplateResult, number, number] {
     let width = this._rateToWidth(consumer.rate);
 
     // const xStart = topLeftX;
@@ -879,22 +882,35 @@ export class ElecSankey extends LitElement {
     );
 
     const xText = xEnd + ARROW_HEAD_LENGTH + TEXT_PADDING + extrasLength;
-    const yText = yEnd + FONT_SIZE_PX / 4;
+    const yText = yEnd;
+
+    //   html`<div
+    //   style="width: ${divWidth}px; left: ${midX}px; top: ${midY}px; margin: ${-divHeight /
+    //   2}px 0 0 ${-divWidth / 2}px;"
+    // >
+
+    const divHeight = width + CONSUMERS_FAN_OUT_VERTICAL_GAP;
+    const divWidth = CONSUMERS_LABEL_WIDTH;
+    const divRet = html`<div
+      class="elecroute-label-consumer"
+      style="width: ${divWidth}px; height:${divHeight}px; left: ${xText}px; top: ${yText}px; margin: ${-divHeight /
+      2}px 0 0 0px;"
+    >
+      ${this._generateLabelDiv(undefined, consumer.text, consumer.rate)}
+    </div>`;
 
     const svgRet = svg`
-    ${svgFlow}
-    ${svgExtras}
-    <polygon points="${xEnd + extrasLength},${yEnd - width / 2}
-      ${xEnd + extrasLength},${yEnd + width / 2}
-      ${xEnd + extrasLength + ARROW_HEAD_LENGTH},${yEnd}"
-      style="fill:${color}" />
-    <text x="${xText}" y="${yText}" font-size="${FONT_SIZE_PX}px">${
-      consumer.text
-    }</text>
-  `;
+      ${svgFlow}
+      ${svgExtras}
+      <polygon points="${xEnd + extrasLength},${yEnd - width / 2}
+        ${xEnd + extrasLength},${yEnd + width / 2}
+        ${xEnd + extrasLength + ARROW_HEAD_LENGTH},${yEnd}"
+        style="fill:${color}" />
+    `;
+
     const bottomLeftY = topLeftY + width;
     const bottomRightY = topRightY + width;
-    return [svgRet, bottomLeftY, bottomRightY];
+    return [divRet, svgRet, bottomLeftY, bottomRightY];
   }
 
   protected _renderConsumerFlows(
@@ -902,8 +918,9 @@ export class ElecSankey extends LitElement {
     y6: number,
     y7: number,
     color: string
-  ): [Array<TemplateResult>, number] {
+  ): [Array<TemplateResult>, Array<TemplateResult>, number] {
     this._recalculateUntrackedRate();
+    const divRetArray: Array<TemplateResult> = [];
     const svgRetArray: Array<TemplateResult> = [];
     const xLeft = x6;
     const xRight = x6 + CONSUMERS_FAN_OUT_HORIZONTAL_SPAN;
@@ -914,10 +931,11 @@ export class ElecSankey extends LitElement {
     if (yRight < TEXT_PADDING) {
       yRight = TEXT_PADDING;
     }
-    let svg_row;
+    let svgRow;
+    let divRow;
     for (const key in this.consumerRoutes) {
       if (Object.prototype.hasOwnProperty.call(this.consumerRoutes, key)) {
-        [svg_row, yLeft, yRight] = this._renderConsumerFlow(
+        [divRow, svgRow, yLeft, yRight] = this._renderConsumerFlow(
           xLeft,
           yLeft,
           xRight,
@@ -925,12 +943,13 @@ export class ElecSankey extends LitElement {
           this.consumerRoutes[key],
           color
         );
-        svgRetArray.push(svg_row);
+        divRetArray.push(divRow);
+        svgRetArray.push(svgRow);
         yRight += CONSUMERS_FAN_OUT_VERTICAL_GAP;
       }
     }
 
-    [svg_row, yLeft, yRight] = this._renderConsumerFlow(
+    [divRow, svgRow, yLeft, yRight] = this._renderConsumerFlow(
       xLeft,
       yLeft,
       xRight,
@@ -938,13 +957,14 @@ export class ElecSankey extends LitElement {
       this._untrackedConsumerRoute,
       color
     );
-    svgRetArray.push(svg_row);
+    divRetArray.push(divRow);
+    svgRetArray.push(svgRow);
     yRight += CONSUMERS_FAN_OUT_VERTICAL_GAP;
 
     if (svgRetArray.length > 0) {
       yRight += CONSUMERS_FAN_OUT_VERTICAL_GAP;
     }
-    return [svgRetArray, yRight];
+    return [divRetArray, svgRetArray, yRight];
   }
 
   protected _gridBlendRatio(): number {
@@ -1052,12 +1072,11 @@ export class ElecSankey extends LitElement {
     );
     const [blendedFlowPreFanOut, x6, y6, x7, y7] =
       this._renderBlendedFlowPreFanOut(x4, y4, y5, blendColor);
-    const [consOutFlowsSvg, y8] = this._renderConsumerFlows(
+    const [consOutFlowsDiv, consOutFlowsSvg, y8] = this._renderConsumerFlows(
       x6,
       y6,
       y7,
-      blendColor,
-      true
+      blendColor
     );
 
     const arr = Array.from(pvInFlowDiv);
@@ -1069,12 +1088,8 @@ export class ElecSankey extends LitElement {
     });
     const ymax = Math.max(y5, y8);
     return html`<div style="border:1px solid black;position: relative;">
-      ${gridInDiv} ${pvInFlowDiv}
+      ${gridInDiv} ${pvInFlowDiv} ${consOutFlowsDiv}
       <svg width="100%" height=${ymax}>
-        <text x="90" y="20" font-size="${FONT_SIZE_PX}px">
-          ${this.graphTitle}
-        </text>
-
         ${pvInFlowSvg} ${generationToGridFlowSvg} ${gridInFlowSvg}
         ${pvInBlendFlowSvg} ${gridInBlendFlowSvg} ${blendedFlowPreFanOut}
         ${consOutFlowsSvg} ${debugPoint(x0, y0, "x0,y0")}
@@ -1099,6 +1114,13 @@ export class ElecSankey extends LitElement {
             position: absolute;
             border: 1px solid black;
             text-align: center;
+          }
+          .elecroute-label-consumer {
+            position: absolute;
+            border: 1px solid black;
+            text-align: left;
+            display: flex;
+            align-items: center;
           }
         }
         svg {

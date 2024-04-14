@@ -158,11 +158,13 @@ export class HuiEnergySolarFlowCard
     this._consumerRoutes[newId] = {
       id: newId,
       rate: 5.5,
+      text: "Consumer 1",
     };
     newId = "consumer-2";
     this._consumerRoutes[newId] = {
       id: newId,
       rate: 9.8,
+      text: "Consumer 2",
     };
 
     // end of test data

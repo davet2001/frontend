@@ -1,6 +1,6 @@
 import { customElement, property } from "lit/decorators";
 
-import { TemplateResult, html } from "lit";
+import { TemplateResult, html, nothing } from "lit";
 import { HomeAssistant } from "../../types";
 import { ElecSankey } from "./elec-sankey";
 // import { ElecSankeyEnhanced } from "./elec-sankey-enhanced";
@@ -11,17 +11,20 @@ import "../ha-icon";
 export class HaElecSankey extends ElecSankey {
   @property({ attribute: false }) public hass!: HomeAssistant;
 
-  @property()
-  public unit: string = "kWh";
-
-  protected _generateIconLabelDiv(icon: string, value: number): TemplateResult {
+  protected _generateLabelDiv(
+    icon: string | undefined,
+    _name: string | undefined,
+    value: number
+  ): TemplateResult {
     return html`
-      <div>
-        <ha-svg-icon .path=${icon}></ha-svg-icon>
-        <br />
+      <div style="background:gray;">
+        ${_name || nothing}
+        ${icon
+          ? html`<ha-svg-icon .path=${icon}> </ha-svg-icon><br />`
+          : nothing}
         ${formatNumber(value, this.hass.locale, {
           maximumFractionDigits: 1,
-        })}${this.unit}
+        })}&nbsp;${this.unit}
       </div>
     `;
   }
