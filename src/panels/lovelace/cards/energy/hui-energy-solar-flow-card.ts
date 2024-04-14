@@ -14,7 +14,6 @@ import { UnsubscribeFunc } from "home-assistant-js-websocket";
 import { css, html, LitElement, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators";
 import { classMap } from "lit/directives/class-map";
-import { formatNumber } from "../../../../common/number/format_number";
 
 import "../../../../components/chart/ha-chart-base";
 import "../../../../components/ha-card";
@@ -386,7 +385,7 @@ export class HuiEnergySolarFlowCard
         margin-left: 32px;
         box-sizing: border-box;
       }
-      elec-sankey {
+      ha-elec-sankey {
         --solar-color: var(--energy-solar-color);
         --grid-in-color: var(--energy-grid-consumption-color);
         --icon-primary-color: var(--icon-primary-color);
