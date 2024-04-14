@@ -60,7 +60,7 @@ export class HuiEnergySolarFlowCard
 
   @state() private _generationInRoutes: { [id: string]: ElecRoute } = {};
 
-  @state() private _consumerRoutes?: { [id: string]: ElecRoute } = {};
+  @state() private _consumerRoutes: { [id: string]: ElecRoute } = {};
 
   protected hassSubscribeRequiredHostProps = ["_config"];
 
@@ -123,6 +123,7 @@ export class HuiEnergySolarFlowCard
             .generationInRoutes=${this._generationInRoutes
               ? this._generationInRoutes
               : undefined}
+            .consumerRoutes=${this._consumerRoutes}
           ></ha-elec-sankey>
         </div>
       </ha-card>
@@ -147,11 +148,21 @@ export class HuiEnergySolarFlowCard
 
     // eslint-disable-next-line no-console
     console.log("energyData=" + energyData);
-    // start of test data
     this._gridInRoute = {
-      id: "thing",
-      text: "test",
+      id: "grid-in",
       rate: totalFromGrid,
+    };
+    // start of test data
+
+    let newId = "consumer-1";
+    this._consumerRoutes[newId] = {
+      id: newId,
+      rate: 5.5,
+    };
+    newId = "consumer-2";
+    this._consumerRoutes[newId] = {
+      id: newId,
+      rate: 9.8,
     };
 
     // end of test data
