@@ -1,6 +1,6 @@
 import { customElement, property } from "lit/decorators";
 
-import { TemplateResult, html, nothing } from "lit";
+import { TemplateResult, css, html, nothing } from "lit";
 import { HomeAssistant } from "../../types";
 import { ElecSankey } from "./elec-sankey";
 // import { ElecSankeyEnhanced } from "./elec-sankey-enhanced";
@@ -28,6 +28,17 @@ export class HaElecSankey extends ElecSankey {
       </div>
     `;
   }
+
+  static styles = [
+    super.styles,
+    css`
+      div {
+        .label {
+          font-size: 12px;
+        }
+      }
+    `,
+  ];
 }
 
 declare global {

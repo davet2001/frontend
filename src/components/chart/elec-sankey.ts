@@ -4,7 +4,15 @@
  * SHould attributes be true or false?
  *
  */
-import { LitElement, TemplateResult, css, html, nothing, svg } from "lit";
+import {
+  CSSResultArray,
+  LitElement,
+  TemplateResult,
+  css,
+  html,
+  nothing,
+  svg,
+} from "lit";
 
 import { mdiTransmissionTower } from "@mdi/js";
 
@@ -626,7 +634,7 @@ export class ElecSankey extends LitElement {
         if (icon) {
           divArray.push(
             html`<div
-              class="elecroute-label-horiz"
+              class="label elecroute-label-horiz"
               style="width: ${divWidth}px; left: ${midX}px; top: ${midY}px; margin: ${-divHeight /
               2}px 0 0 ${-divWidth / 2}px;"
             >
@@ -725,7 +733,7 @@ export class ElecSankey extends LitElement {
 
     const divRet = html`<div
       width=${ICON_SIZE_PX * 2}
-      class="elecroute-label"
+      class="label elecroute-label-grid"
       style="left: ${iconX}px; top: ${iconY}px;"
     >
       ${this._generateLabelDiv(mdiTransmissionTower, undefined, rate)}
@@ -892,7 +900,7 @@ export class ElecSankey extends LitElement {
     const divHeight = width + CONSUMERS_FAN_OUT_VERTICAL_GAP;
     const divWidth = CONSUMERS_LABEL_WIDTH;
     const divRet = html`<div
-      class="elecroute-label-consumer"
+      class="label elecroute-label-consumer"
       style="width: ${divWidth}px; height:${divHeight}px; left: ${xText}px; top: ${yText}px; margin: ${-divHeight /
       2}px 0 0 0px;"
     >
@@ -1101,23 +1109,22 @@ export class ElecSankey extends LitElement {
     </div>`;
   }
 
-  static get styles() {
+  static get styles(): CSSResultArray {
     return [
       css`
         div {
-          .elecroute-label {
+          .label {
+            font-size: 12px;
             position: absolute;
             border: 1px solid black;
+          }
+          .elecroute-label-grid {
             text-align: center;
           }
           .elecroute-label-horiz {
-            position: absolute;
-            border: 1px solid black;
             text-align: center;
           }
           .elecroute-label-consumer {
-            position: absolute;
-            border: 1px solid black;
             text-align: left;
             display: flex;
             align-items: center;
