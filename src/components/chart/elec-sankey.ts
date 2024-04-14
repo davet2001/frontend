@@ -1,7 +1,6 @@
 /**
  * Todo:
- * remove console statements
- * SHould attributes be true or false?
+ * Should attributes be true or false?
  *
  */
 import {
@@ -45,7 +44,7 @@ const GRID_ORIGIN_X = 80;
 export const PAD_ANTIALIAS = 0.5;
 
 export interface ElecRoute {
-  id: string;
+  id?: string;
   text?: string;
   rate: number;
   icon?: string;
@@ -266,7 +265,7 @@ export class ElecSankey extends LitElement {
   private _phantomGenerationInRoute?: ElecRoute;
 
   private _untrackedConsumerRoute: ElecRoute = {
-    id: "untracked",
+    id: undefined,
     text: "Untracked",
     rate: 0,
   };
@@ -445,6 +444,7 @@ export class ElecSankey extends LitElement {
   }
 
   protected _generateLabelDiv(
+    _id: string | undefined,
     icon: string | undefined,
     _name: string | undefined,
     value: number
@@ -528,7 +528,7 @@ export class ElecSankey extends LitElement {
               style="width: ${divWidth}px; left: ${midX}px; top: ${midY}px; margin: ${-divHeight /
               2}px 0 0 ${-divWidth / 2}px;"
             >
-              ${this._generateLabelDiv(icon, undefined, rate)}
+              ${this._generateLabelDiv(key, icon, undefined, rate)}
             </div>`
           );
         }
@@ -625,7 +625,12 @@ export class ElecSankey extends LitElement {
       class="label elecroute-label-grid"
       style="left: ${iconX}px; top: ${iconY}px;"
     >
-      ${this._generateLabelDiv(mdiTransmissionTower, undefined, rate)}
+      ${this._generateLabelDiv(
+        this.gridInRoute.id,
+        mdiTransmissionTower,
+        undefined,
+        rate
+      )}
     </div>`;
 
     // <text text-anchor="middle"
@@ -793,7 +798,12 @@ export class ElecSankey extends LitElement {
       style="width: ${divWidth}px; height:${divHeight}px; left: ${xText}px; top: ${yText}px; margin: ${-divHeight /
       2}px 0 0 0px;"
     >
-      ${this._generateLabelDiv(undefined, consumer.text, consumer.rate)}
+      ${this._generateLabelDiv(
+        consumer.id,
+        undefined,
+        consumer.text,
+        consumer.rate
+      )}
     </div>`;
 
     const svgRet = svg`

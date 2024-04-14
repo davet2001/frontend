@@ -6,18 +6,24 @@ import { ElecSankey } from "./elec-sankey";
 // import { ElecSankeyEnhanced } from "./elec-sankey-enhanced";
 import { formatNumber } from "../../common/number/format_number";
 import "../ha-icon";
+import { fireEvent } from "../../common/dom/fire_event";
 
 @customElement("ha-elec-sankey")
 export class HaElecSankey extends ElecSankey {
   @property({ attribute: false }) public hass!: HomeAssistant;
 
   protected _generateLabelDiv(
+    id: string | undefined,
     icon: string | undefined,
     _name: string | undefined,
     value: number
   ): TemplateResult {
     return html`
-      <div class="label-action">
+      <div
+        class=${id ? "label-action-clickable" : "label-action"}
+        id=${id || ""}
+        @click=${id ? this._handleMoreInfo : nothing}
+      >
         ${_name || nothing}
         ${icon
           ? html`<ha-svg-icon .path=${icon}> </ha-svg-icon><br />`
@@ -29,6 +35,13 @@ export class HaElecSankey extends ElecSankey {
     `;
   }
 
+  private _handleMoreInfo(e: MouseEvent) {
+    const div = e.target as HTMLDivElement;
+    fireEvent(this, "hass-more-info", {
+      entityId: div.id,
+    });
+  }
+
   static styles = [
     super.styles,
     css`
@@ -36,9 +49,10 @@ export class HaElecSankey extends ElecSankey {
         .label {
           font-size: 12px;
         }
-        /* .label-action {
-          background-color: gray;
-        } */
+        .label-action-clickable {
+          // background-color: gray;
+          cursor: pointer;
+        }
       }
     `,
   ];
