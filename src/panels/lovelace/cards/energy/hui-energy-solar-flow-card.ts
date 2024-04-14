@@ -9,7 +9,7 @@
  * - Fix warnings
  */
 import { endOfToday, startOfToday } from "date-fns";
-import { mdiTransmissionTower, mdiSolarPower } from "@mdi/js";
+import { mdiSolarPower } from "@mdi/js";
 import { UnsubscribeFunc } from "home-assistant-js-websocket";
 import { css, html, LitElement, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators";
@@ -120,7 +120,6 @@ export class HuiEnergySolarFlowCard
           <ha-elec-sankey
             .hass=${this.hass}
             .gridInRoute=${this._gridInRoute ? this._gridInRoute : undefined}
-            .icon=${mdiTransmissionTower}
             .generationInRoutes=${this._generationInRoutes
               ? this._generationInRoutes
               : {}}
