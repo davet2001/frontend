@@ -466,13 +466,14 @@ export class ElecSankey extends LitElement {
     _name: string | undefined,
     value: number
   ): TemplateResult {
+    const valueRounded = Math.round(value * 10) / 10;
     return html`
       <div>
         <svg x="0" y="0" height=${ICON_SIZE_PX}>
           <path d=${icon} />
         </svg>
         <br />
-        ${value} ${this.unit}
+        ${valueRounded} ${this.unit}
       </div>
     `;
   }
@@ -610,7 +611,7 @@ export class ElecSankey extends LitElement {
     for (const key in routes) {
       if (Object.prototype.hasOwnProperty.call(routes, key)) {
         // const friendlyName = routes.text;
-        const rate = Math.round(routes[key].rate);
+        const rate = routes[key].rate;
         const width = this._rateToWidth(rate);
         svgArray.push(
           renderFlowByCorners(
@@ -713,7 +714,7 @@ export class ElecSankey extends LitElement {
     const x_width = topRightX - GRID_ORIGIN_X;
     const x3 = topRightX;
     const y3 = topRightY + width;
-    const rate = Math.round(this.gridInRoute.rate);
+    const rate = this.gridInRoute.rate;
     const midX = startTerminatorX - ICON_SIZE_PX * 2;
     const midY = startTerminatorY + width / 2;
 
@@ -730,7 +731,6 @@ export class ElecSankey extends LitElement {
     //   </svg>`;
 
     // const divRet = this._generateLabelDiv(mdiTransmissionTower, 99);
-
     const divRet = html`<div
       width=${ICON_SIZE_PX * 2}
       class="label elecroute-label-grid"
