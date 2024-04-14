@@ -1,7 +1,9 @@
 import { customElement, property } from "lit/decorators";
 
 import { TemplateResult, html } from "lit";
+import { HomeAssistant } from "../../types";
 import { ElecSankey } from "./elec-sankey";
+// import { ElecSankeyEnhanced } from "./elec-sankey-enhanced";
 import { formatNumber } from "../../common/number/format_number";
 import "../ha-icon";
 
