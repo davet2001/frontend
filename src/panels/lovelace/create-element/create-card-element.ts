@@ -60,8 +60,7 @@ const LAZY_LOAD_TYPES = {
     import("../cards/energy/hui-energy-self-sufficiency-gauge-card"),
   "energy-solar-graph": () =>
     import("../cards/energy/hui-energy-solar-graph-card"),
-  "energy-solar-flow": () =>
-    import("../cards/energy/hui-energy-solar-flow-card"),
+  "energy-elec-flow": () => import("../cards/energy/hui-energy-elec-flow-card"),
   "energy-sources-table": () =>
     import("../cards/energy/hui-energy-sources-table-card"),
   "energy-usage-graph": () =>

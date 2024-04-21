@@ -33,8 +33,8 @@ import "../../../../components/chart/elec-sankey";
 import type { ElecRoute } from "../../../../components/chart/elec-sankey";
 import "../../../../components/chart/ha-energy-sankey";
 
-@customElement("hui-energy-solar-flow-card")
-export class HuiEnergySolarFlowCard
+@customElement("hui-energy-elec-flow-card")
+export class HuiEnergyElecFlowCard
   extends SubscribeMixin(LitElement)
   implements LovelaceCard
 {
@@ -177,6 +177,6 @@ export class HuiEnergySolarFlowCard
 
 declare global {
   interface HTMLElementTagNameMap {
-    "hui-energy-solar-flow-card": HuiEnergySolarFlowCard;
+    "hui-energy-elec-flow-card": HuiEnergyElecFlowCard;
   }
 }

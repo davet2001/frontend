@@ -82,7 +82,7 @@ export class EnergyViewStrategy extends ReactiveElement {
       });
       view.cards!.push({
         title: hass.localize("ui.panel.energy.cards.energy_solar_flow_title"),
-        type: "energy-solar-flow",
+        type: "energy-elec-flow",
         collection_key: "energy_dashboard",
       });
     }
