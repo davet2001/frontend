@@ -54,6 +54,9 @@ export class HaElecSankey extends ElecSankey {
           cursor: pointer;
         }
       }
+      ha-svg-icon {
+        --icon-primary-color: var(--icon-primary-color);
+      }
     `,
   ];
 }

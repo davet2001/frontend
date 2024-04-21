@@ -31,7 +31,7 @@ import { LovelaceCard } from "../../types";
 import { EnergySolarFlowCardConfig } from "../types";
 import "../../../../components/chart/elec-sankey";
 import type { ElecRoute } from "../../../../components/chart/elec-sankey";
-import "../../../../components/chart/ha-elec-sankey";
+import "../../../../components/chart/ha-energy-sankey";
 
 @customElement("hui-energy-solar-flow-card")
 export class HuiEnergySolarFlowCard
@@ -80,14 +80,14 @@ export class HuiEnergySolarFlowCard
             "has-header": !!this._config.title,
           })}"
         >
-          <ha-elec-sankey
+          <ha-energy-sankey
             .hass=${this.hass}
             .gridInRoute=${this._gridInRoute ? this._gridInRoute : undefined}
             .generationInRoutes=${this._generationInRoutes
               ? this._generationInRoutes
               : {}}
             .consumerRoutes=${this._consumerRoutes ? this._consumerRoutes : {}}
-          ></ha-elec-sankey>
+          ></ha-energy-sankey>
         </div>
       </ha-card>
     `;
@@ -160,43 +160,19 @@ export class HuiEnergySolarFlowCard
     });
   }
 
-  static get styles() {
-    return css`
-      ha-card {
-        height: 100%;
-      }
-      .card-header {
-        padding-bottom: 0;
-      }
-      .content {
-        padding: 16px;
-      }
-      .has-header {
-        padding-top: 0;
-      }
-      .no-data {
-        position: absolute;
-        height: 100%;
-        top: 0;
-        left: 0;
-        right: 0;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 20%;
-        margin-left: 32px;
-        box-sizing: border-box;
-      }
-      ha-elec-sankey {
-        --solar-color: var(--energy-solar-color);
-        --grid-in-color: var(--energy-grid-consumption-color);
-        --icon-primary-color: var(--icon-primary-color);
-      }
-      ha-svg-icon {
-        --icon-primary-color: var(--icon-primary-color);
-      }
-    `;
-  }
+  static styles = css`
+    ha-card {
+      height: 100%;
+    }
+    .card-header {
+      padding-bottom: 0;
+    }
+    ha-energy-sankey {
+      --solar-color: var(--energy-solar-color);
+      --grid-in-color: var(--energy-grid-consumption-color);
+      --icon-primary-color: var(--icon-primary-color);
+    }
+  `;
 }
 
 declare global {
