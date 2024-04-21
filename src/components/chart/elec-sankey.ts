@@ -225,7 +225,7 @@ function debugPoint(x: number, y: number, label: string): TemplateResult {
  * In general, the aim of this class is to display a coherent and informative
  * visual representation of the flow of electricity. If a strange occurence
  * occurs, such as consumption exceeding total input power, the class should
- * attempt to display a sensible image.
+ * attempt to display a sensible visual.
  *
  * The reason for this is that the class is likely to receive asynchronous
  * updates from different sensors. It must display a glitch-free best
