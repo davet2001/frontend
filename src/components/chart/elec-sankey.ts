@@ -574,7 +574,7 @@ export class ElecSankey extends LitElement {
       y10 + width,
       x10,
       y10,
-      PV_COLOR
+      "solar"
     );
     return svg`
     ${generatedFlowPath}

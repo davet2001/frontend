@@ -163,6 +163,7 @@ export class HuiEnergyElecFlowCard
   static styles = css`
     ha-card {
       height: 100%;
+      padding: 16px;
     }
     .card-header {
       padding-bottom: 0;
@@ -170,7 +171,6 @@ export class HuiEnergyElecFlowCard
     ha-energy-sankey {
       --solar-color: var(--energy-solar-color);
       --grid-in-color: var(--energy-grid-consumption-color);
-      --icon-primary-color: var(--icon-primary-color);
     }
   `;
 }
