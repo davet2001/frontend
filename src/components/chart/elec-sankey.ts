@@ -254,13 +254,15 @@ export class ElecSankey extends LitElement {
   @property({ attribute: false })
   public gridInRoute?: ElecRoute;
 
-  @property({ type: Object })
-  public gridInHTML?: TemplateResult;
+  @property({ attribute: false })
+  public gridOutRoute?: ElecRoute;
 
   @property()
   public consumerRoutes: { [id: string]: ElecRoute } = {};
 
   private _rateToWidthMultplier: number = 0.2;
+
+  private _phantomGridInRoute?: ElecRoute;
 
   private _phantomGenerationInRoute?: ElecRoute;
 
@@ -270,32 +272,12 @@ export class ElecSankey extends LitElement {
     rate: 0,
   };
 
-  constructor() {
-    super();
-    // this.id = "flow-map1";
-    this._recalculateUntrackedRate();
-    this._updateRateToWidthMultiplier();
-    // this.requestUpdate();
-  }
+  // constructor() {
+  //   super();
+  //   this._recalculate();
+  // }
 
-  /**
-   * Calculates and updates a scaling factor to make the UI look sensible.
-   * Since there is no limit to the value of input/output powers, the scaling
-   * needs to be dynamic. This function calculates the scaling factor based
-   * on ensuring the total width of the maximum 'trunk' is a sensible
-   * value.
-   */
-  private _updateRateToWidthMultiplier() {
-    const widest_trunk = Math.max(
-      this._totalGenerationRate() + this._totalPhantomGenerationRate(),
-      this._totalGridInRate(),
-      this._totalConsumerRate(),
-      1.0
-    );
-    this._rateToWidthMultplier = TARGET_SCALED_TRUNK_WIDTH / widest_trunk;
-  }
-
-  private _totalGenerationRate(): number {
+  private _generationTrackedTotal(): number {
     let totalGen = 0;
     for (const key in this.generationInRoutes) {
       if (Object.prototype.hasOwnProperty.call(this.generationInRoutes, key)) {
@@ -305,61 +287,138 @@ export class ElecSankey extends LitElement {
     return totalGen;
   }
 
-  private _totalPhantomGenerationRate(): number {
-    if (this._phantomGenerationInRoute === undefined) {
-      return 0;
-    }
-    return this._phantomGenerationInRoute.rate;
+  private _generationPhantom(): number {
+    return this._phantomGenerationInRoute
+      ? this._phantomGenerationInRoute.rate
+      : 0;
   }
 
-  private _totalGridInRate() {
-    if (this.gridInRoute === undefined) {
-      return 0;
-    }
-    return this.gridInRoute.rate;
+  private _generationTotal(): number {
+    return this._generationTrackedTotal() + this._generationPhantom();
   }
 
-  private _totalTrackedConsumerRate(): number {
-    let trackedRate = 0;
+  private _netGridImport(): number {
+    if (this.gridInRoute && this.gridOutRoute) {
+      return this.gridInRoute.rate - this.gridOutRoute.rate;
+    }
+    if (this.gridInRoute === undefined && this.gridOutRoute) {
+      return -this.gridOutRoute.rate;
+    }
+    if (this.gridInRoute && this.gridOutRoute === undefined) {
+      return this.gridInRoute.rate;
+    }
+    return 0;
+  }
+
+  private _gridImport(): number {
+    return this.gridInRoute ? this.gridInRoute.rate : 0;
+  }
+
+  private _gridExport(): number {
+    if (this.gridOutRoute) {
+      return this.gridOutRoute.rate;
+    }
+    return -this._netGridImport();
+  }
+
+  private _consumerTrackedTotal(): number {
+    let total = 0;
     for (const id in this.consumerRoutes) {
       if (Object.prototype.hasOwnProperty.call(this.consumerRoutes, id)) {
-        trackedRate += this.consumerRoutes[id].rate;
+        total += this.consumerRoutes[id].rate;
       }
     }
-    return trackedRate;
+    return total;
   }
 
-  private _totalConsumerRate(): number {
-    return this._totalTrackedConsumerRate() + this._untrackedConsumerRoute.rate;
-  }
+  private _recalculate() {
+    const netGridImport = this._netGridImport();
+    const generationTrackedTotal = this._generationTrackedTotal();
+    const consumerTrackedTotal = this._consumerTrackedTotal();
 
-  private _recalculateUntrackedRate() {
-    let rate: number = 0;
-    if (this._totalGridInRate() > 0) {
-      // Not exporting. All energy is going to consumers.
-      // @todo support battery charging.
-      rate = this._totalGenerationRate() + this._totalGridInRate();
+    // Balance the books.
+    const x = consumerTrackedTotal - netGridImport - generationTrackedTotal;
+    if (x > 0) {
+      // There is an unknown energy source.
+      if (this.gridInRoute === undefined && this.gridOutRoute === undefined) {
+        // If we aren't tracking grid sources, create a phantom one.
+        this._phantomGridInRoute = {
+          id: "untracked",
+          text: "Unknown",
+          rate: x,
+        };
+        this._phantomGenerationInRoute = undefined;
+        this._untrackedConsumerRoute.rate = 0;
+      } else {
+        // Otherwise, best guess is now a phantom generation source.
+        this._phantomGridInRoute = undefined;
+        this._phantomGenerationInRoute = {
+          id: "untracked",
+          text: "Unknown",
+          rate: x,
+        };
+        this._untrackedConsumerRoute.rate = 0;
+      }
     } else {
-      // Exporting. Energy is going from generation to grid and consumers.
-      // gridInRate is negative in this case.
-      // @todo support battery charging.
-      rate = this._totalGenerationRate() + this._totalGridInRate();
-    }
-    const untrackedRate = rate - this._totalTrackedConsumerRate();
-    // Handle edge cases.
-    if (untrackedRate < 0) {
-      // If untrackedRate is negative, there's an unexplained energy source.
-      // Create a phantom generation source.
-      this._phantomGenerationInRoute = {
-        id: "untracked",
-        text: "Unknown",
-        rate: -untrackedRate,
-      };
-      this._untrackedConsumerRoute.rate = 0;
-    } else {
-      this._untrackedConsumerRoute.rate = untrackedRate;
+      // There is an untracked energy consumer (normal situation).
+      this._phantomGridInRoute = undefined;
       this._phantomGenerationInRoute = undefined;
+      this._untrackedConsumerRoute.rate = -x;
     }
+
+    /**
+     * Calculate and update a scaling factor to make the UI look sensible.
+     * Since there is no limit to the value of input/output powers, the scaling
+     * needs to be dynamic. This function calculates the scaling factor based
+     * on ensuring the total width of the maximum 'trunk' sensible.
+     */
+    const genTotal =
+      generationTrackedTotal +
+      (this._phantomGenerationInRoute
+        ? this._phantomGenerationInRoute.rate
+        : 0);
+    const gridInTotal =
+      netGridImport +
+      (this._phantomGridInRoute ? this._phantomGridInRoute.rate : 0);
+    const consumerTotal =
+      consumerTrackedTotal +
+      (this._untrackedConsumerRoute ? this._untrackedConsumerRoute.rate : 0);
+
+    const widest_trunk = Math.max(genTotal, gridInTotal, consumerTotal, 1.0);
+    this._rateToWidthMultplier = TARGET_SCALED_TRUNK_WIDTH / widest_trunk;
+    // eslint-disable-next-line no-console
+    console.log(
+      "Recalculated:\n" +
+        "netGridImport = " +
+        netGridImport +
+        "\n" +
+        "generationTrackedTotal = " +
+        generationTrackedTotal +
+        "\n" +
+        "consumerTrackedTotal = " +
+        consumerTrackedTotal +
+        "\n\n" +
+        "genTotal=" +
+        genTotal +
+        "\n" +
+        "gridInTotal=" +
+        gridInTotal +
+        "\n" +
+        "consumerTotal=" +
+        consumerTotal +
+        "\n" +
+        "phantomGridInroute=" +
+        (this._phantomGridInRoute ? this._phantomGridInRoute.rate : 0) +
+        "\n" +
+        "phantomGenerationInroute=" +
+        (this._phantomGenerationInRoute
+          ? this._phantomGenerationInRoute.rate
+          : 0) +
+        "\n" +
+        "untrackedConsumerRoute=" +
+        this._untrackedConsumerRoute.rate +
+        "\n"
+    );
   }
 
   private _rateToWidth(rate: number): number {
@@ -368,28 +427,29 @@ export class ElecSankey extends LitElement {
   }
 
   private _generationInFlowWidth(): number {
-    const width = this._rateToWidth(this._totalGenerationRate());
-    return width > 1 ? width : 1;
-  }
-
-  private _phantomGenerationInFlowWidth(): number {
-    if (this._phantomGenerationInRoute === undefined) {
-      return 0;
-    }
-    return this._rateToWidth(this._phantomGenerationInRoute.rate);
+    return this._rateToWidth(
+      this._generationTrackedTotal() + this._generationPhantom()
+    );
   }
 
   private _generationToConsumersFlowWidth(): number {
-    if (this.gridInRoute === undefined || this.gridInRoute.rate > 0) {
-      return (
-        this._generationInFlowWidth() + this._phantomGenerationInFlowWidth()
-      );
+    if (this._gridExport() > 0) {
+      return this._rateToWidth(this._generationTotal() - this._gridExport());
     }
-    return (
-      this._generationInFlowWidth() +
-      this._phantomGenerationInFlowWidth() -
-      this._rateToWidth(-this.gridInRoute.rate)
-    );
+    return this._rateToWidth(this._generationTotal());
+
+    // if (this._netGridImport() > 0) {
+    // )
+    // if (this.gridInRoute === undefined || this.gridInRoute.rate > 0) {
+    //   return (
+    //     this._generationInFlowWidth() + this._phantomGenerationInFlowWidth()
+    //   );
+    // }
+    // return (
+    //   this._generationInFlowWidth() +
+    //   this._phantomGenerationInFlowWidth() -
+    //   this._rateToWidth(-this.gridInRoute.rate)
+    // );
   }
 
   private _generationToGridFlowWidth(): number {
@@ -461,10 +521,6 @@ export class ElecSankey extends LitElement {
     `;
   }
 
-  protected _totalGenerationWidth(): number {
-    return this._generationInFlowWidth() + this._phantomGenerationInFlowWidth();
-  }
-
   protected _generationToConsumersRadius(): number {
     return 50 + this._generationToConsumersFlowWidth();
   }
@@ -476,10 +532,8 @@ export class ElecSankey extends LitElement {
     x2: number,
     y2: number
   ): [TemplateResult[], TemplateResult] {
-    const totalGenWidth = this._totalGenerationWidth();
-    // const widthToConsumers = this._generationToConsumersFlowWidth();
+    const totalGenWidth = this._generationInFlowWidth();
     const widthToGrid = this._generationToGridFlowWidth();
-    // const radius = this._generationToConsumersRadius();
 
     const count =
       Object.keys(this.generationInRoutes).length +
@@ -826,7 +880,7 @@ export class ElecSankey extends LitElement {
     y7: number,
     color: string
   ): [Array<TemplateResult>, Array<TemplateResult>, number] {
-    this._recalculateUntrackedRate();
+    // this._recalculateUntrackedRate();
     const divRetArray: Array<TemplateResult> = [];
     const svgRetArray: Array<TemplateResult> = [];
     const xLeft = x6;
@@ -880,7 +934,7 @@ export class ElecSankey extends LitElement {
     }
     const grid = this.gridInRoute.rate;
     const renewable =
-      this._totalGenerationRate() + this._totalPhantomGenerationRate();
+      this._generationTrackedTotal() + this._generationPhantom();
     const ratio = grid / (grid + renewable);
     if (ratio < 0) {
       return 0;
@@ -905,7 +959,7 @@ export class ElecSankey extends LitElement {
     number,
     number,
   ] {
-    const x0 = PV_ORIGIN_X - this._totalGenerationWidth() / 2;
+    const x0 = PV_ORIGIN_X - this._generationInFlowWidth() / 2;
     const y0 = PV_ORIGIN_Y + TERMINATOR_BLOCK_LENGTH;
 
     const widthGenToConsumers = this._generationToConsumersFlowWidth();
@@ -926,7 +980,7 @@ export class ElecSankey extends LitElement {
       x0 + widthGenToGrid + widthGenToConsumers / 2 + radiusGenToConsumers;
 
     const x2: number = x1;
-    const y2: number = y1 + this._generationToConsumersFlowWidth();
+    const y2: number = y1 + widthGenToConsumers;
 
     const x10 = x0 + this._generationToGridFlowWidth() - (y2 - y0);
     const y10 = y2 - this._generationToGridFlowWidth();
@@ -934,6 +988,7 @@ export class ElecSankey extends LitElement {
   }
 
   protected render(): TemplateResult {
+    this._recalculate();
     if (this.gridInRoute === undefined) {
       return html`<svg width="100%" height="80px">
         <text x="90" y="20" font-size="${FONT_SIZE_PX}px">
@@ -941,8 +996,6 @@ export class ElecSankey extends LitElement {
         </text>
       </svg>`;
     }
-    this._updateRateToWidthMultiplier();
-
     const [x0, y0, x1, y1, x2, y2, x10, y10] = this._calc_xy();
     const [pvInFlowDiv, pvInFlowSvg] = this.renderGenerationToConsumersFlow(
       x0,
