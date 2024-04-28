@@ -461,6 +461,9 @@ export class ElecSankey extends LitElement {
   }
 
   private _generationToGridFlowWidth(): number {
+    if (this._gridExport() <= 0) {
+      return 0;
+    }
     if (this.gridOutRoute) {
       return this._rateToWidth(this._gridExport());
     }
