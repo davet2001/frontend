@@ -115,6 +115,27 @@ class HuiPowerFlowCard extends LitElement implements LovelaceCard {
       };
     }
 
+    let gridOutRoute: ElecRoute | null = null;
+    if (this._config.power_to_grid_entity) {
+      const stateObj = this.hass.states[this._config.power_to_grid_entity];
+      if (!stateObj) {
+        return html`
+          <hui-warning>
+            ${createEntityNotFoundWarning(
+              this.hass,
+              this._config.power_to_grid_entity
+            )}
+          </hui-warning>
+        `;
+      }
+      const name = computeStateName(stateObj);
+      gridOutRoute = {
+        id: this._config.power_to_grid_entity,
+        text: name,
+        rate: Number(stateObj.state),
+      };
+    }
+
     const generationInRoutes: { [id: string]: ElecRoute } = {};
     if (this._config.generation_entities) {
       for (const entity of this._config.generation_entities) {
@@ -195,6 +216,7 @@ class HuiPowerFlowCard extends LitElement implements LovelaceCard {
           .hass=${this.hass}
           .unit=${"kW"}
           .gridInRoute=${gridInRoute || undefined}
+          .gridOutRoute=${gridOutRoute || undefined}
           .generationInRoutes=${generationInRoutes}
           .consumerRoutes=${consumerRoutes}
         ></ha-elec-sankey>
@@ -216,6 +238,7 @@ class HuiPowerFlowCard extends LitElement implements LovelaceCard {
     if (this._config) {
       for (const id of [
         this._config.power_from_grid_entity || [],
+        this._config.power_to_grid_entity || [],
         ...this._config!.generation_entities,
         ...this._config!.consumer_entities,
       ]) {
@@ -254,7 +277,6 @@ class HuiPowerFlowCard extends LitElement implements LovelaceCard {
   static get styles(): CSSResultGroup {
     return css`
       ha-card {
-        // cursor: pointer;
         height: 100%;
         //overflow: hidden;
         padding: 16px;

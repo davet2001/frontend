@@ -307,7 +307,10 @@ export class ElecSankey extends LitElement {
   }
 
   private _gridImport(): number {
-    return this.gridInRoute ? this.gridInRoute.rate : 0;
+    if (this.gridInRoute) {
+      return this.gridInRoute.rate > 0 ? this.gridInRoute.rate : 0;
+    }
+    return this._netGridImport();
   }
 
   private _gridExport(): number {
@@ -328,12 +331,15 @@ export class ElecSankey extends LitElement {
   }
 
   private _recalculate() {
+    const gridImport = this._gridImport();
+    const gridExport = this._gridExport();
     const netGridImport = this._netGridImport();
     const generationTrackedTotal = this._generationTrackedTotal();
     const consumerTrackedTotal = this._consumerTrackedTotal();
 
     // Balance the books.
-    const x = consumerTrackedTotal - netGridImport - generationTrackedTotal;
+    const x =
+      consumerTrackedTotal - gridImport - (generationTrackedTotal - gridExport);
     if (x > 0) {
       // There is an unknown energy source.
       if (this.gridInRoute === undefined && this.gridOutRoute === undefined) {
@@ -374,7 +380,7 @@ export class ElecSankey extends LitElement {
         ? this._phantomGenerationInRoute.rate
         : 0);
     const gridInTotal =
-      netGridImport +
+      gridImport +
       (this._phantomGridInRoute ? this._phantomGridInRoute.rate : 0);
     const consumerTotal =
       consumerTrackedTotal +
@@ -385,6 +391,12 @@ export class ElecSankey extends LitElement {
     // eslint-disable-next-line no-console
     console.log(
       "Recalculated:\n" +
+        "x = " +
+        x +
+        "\n" +
+        "gridImport = " +
+        gridImport +
+        "\n" +
         "netGridImport = " +
         netGridImport +
         "\n" +
@@ -449,6 +461,9 @@ export class ElecSankey extends LitElement {
   }
 
   private _generationToGridFlowWidth(): number {
+    if (this.gridOutRoute) {
+      return this._rateToWidth(this._gridExport());
+    }
     if (!this.gridInRoute) {
       return 0;
     }
@@ -820,17 +835,9 @@ export class ElecSankey extends LitElement {
     consumer: ElecRoute,
     color: string
   ): [TemplateResult, TemplateResult, number, number] {
-    let width = this._rateToWidth(consumer.rate);
-
-    // const xStart = topLeftX;
-    // const yStart = topLeftY + width / 2;
+    const width = this._rateToWidth(consumer.rate);
     const xEnd = topRightX;
     const yEnd = topRightY + width / 2;
-
-    if (width < 1) {
-      // Prevent invisible lines
-      width = 1;
-    }
     const svgFlow = renderFlowByCorners(
       topLeftX,
       topLeftY,
@@ -853,18 +860,12 @@ export class ElecSankey extends LitElement {
 
     const xText = xEnd + ARROW_HEAD_LENGTH + TEXT_PADDING + extrasLength;
     const yText = yEnd;
-
-    //   html`<div
-    //   style="width: ${divWidth}px; left: ${midX}px; top: ${midY}px; margin: ${-divHeight /
-    //   2}px 0 0 ${-divWidth / 2}px;"
-    // >
-
     const divHeight = width + CONSUMERS_FAN_OUT_VERTICAL_GAP / 2;
     const divWidth = CONSUMERS_LABEL_WIDTH;
     const divRet = html`<div
       class="label elecroute-label-consumer"
-      style="width: ${divWidth}px; height:${divHeight}px; left: ${xText}px; top: ${yText}px; margin: ${-divHeight /
-      2}px 0 0 0px;"
+      style="width: ${divWidth}px; height:${divHeight}px; left: ${xText}px;
+      top: ${yText}px; margin: ${-divHeight / 2}px 0 0 0px;"
     >
       ${this._generateLabelDiv(
         consumer.id,
@@ -1066,9 +1067,7 @@ export class ElecSankey extends LitElement {
       css`
         div {
           .label {
-            //font-size: 12px;
             position: absolute;
-            // border: 1px solid black;
           }
           .elecroute-label-grid {
             text-align: center;
