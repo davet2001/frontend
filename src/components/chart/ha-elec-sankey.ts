@@ -50,7 +50,6 @@ export class HaElecSankey extends ElecSankey {
           font-size: 12px;
         }
         .label-action-clickable {
-          // background-color: gray;
           cursor: pointer;
         }
       }

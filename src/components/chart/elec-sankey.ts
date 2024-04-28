@@ -187,7 +187,7 @@ function renderFlowByCorners(
   );
   if (ret1 == null || ret2 == null || ret3 == null || ret4 == null) {
     // eslint-disable-next-line no-console
-    console.log("Warning: Flow map creation failed.");
+    console.log("Warning: Flow creation failed.");
     return svg``;
   }
   const [bezierStartLX, bezierStartLY, ,] = ret1;
@@ -204,10 +204,6 @@ function renderFlowByCorners(
       C ${bezierEndRX},${bezierEndRY} ${bezierStartRX},${bezierStartRY} ${startRX},${startRY} Z"
       style="${fillspec}"
   />
-  <!-- <circle cx="${pointAX}" cy="${pointAY}" r="5" fill="#22DDDD" />
-  <circle cx="${pointBX}" cy="${pointBY}" r="5" fill="#22DDDD" />
-
-  <circle cx="${bezierStartLX}" cy="${bezierStartLY}" r="5" fill="#DDDDDD" /> -->
 `;
   return svg_ret;
 }
@@ -569,6 +565,15 @@ export class ElecSankey extends LitElement {
             "solar"
           )
         );
+        svgArray.push(
+          svg`
+          <polygon points="${xA + width},${startTerminatorY}
+          ${xA},${startTerminatorY},
+          ${xA + width / 2},${startTerminatorY + ARROW_HEAD_LENGTH}"
+          class="tint"/>
+        `
+        );
+
         const midX = xA + width / 2;
         const midY = (PV_ORIGIN_Y - 0) / 2;
 
@@ -630,15 +635,20 @@ export class ElecSankey extends LitElement {
       y10,
       "solar"
     );
+
     return svg`
     ${generatedFlowPath}
     <rect
       class="solar"
-      x="${GRID_ORIGIN_X}"
+      x="${GRID_ORIGIN_X + ARROW_HEAD_LENGTH}"
       y="${y10}"
       height="${width}"
-      width="${x10 - GRID_ORIGIN_X}"
+      width="${x10 - GRID_ORIGIN_X - ARROW_HEAD_LENGTH}"
     />
+    <polygon points="${GRID_ORIGIN_X + ARROW_HEAD_LENGTH},${y10}
+      ${GRID_ORIGIN_X + ARROW_HEAD_LENGTH},${y10 + width}
+      ${GRID_ORIGIN_X},${y10 + width / 2}"
+      class="solar"/>
   `;
   }
 
@@ -701,6 +711,10 @@ export class ElecSankey extends LitElement {
       height="${width}"
       width="${x_width}"
     />
+    <polygon points="${startTerminatorX},${startTerminatorY}
+    ${startTerminatorX},${startTerminatorY + width}
+    ${startTerminatorX + ARROW_HEAD_LENGTH},${startTerminatorY + width / 2}"
+    class="tint"/>
   `;
     return [divRet, svgRet, x3, y3];
   }
@@ -1070,15 +1084,22 @@ export class ElecSankey extends LitElement {
         }
         svg {
           rect {
-            stroke: none; //#000000;
+            stroke: none;
             stroke-width: 0;
           }
           path {
-            stroke: none; //#000000;
+            stroke: none;
             stroke-width: 0;
           }
           polygon {
             stroke: none;
+          }
+          polygon.solar {
+            fill: var(--solar-color, #0d6a04);
+          }
+          polygon.tint {
+            fill: #000000;
+            opacity: 0.2;
           }
           path.flow {
             fill: gray;
