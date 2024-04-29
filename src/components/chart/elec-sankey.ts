@@ -13,7 +13,7 @@ import {
   svg,
 } from "lit";
 
-import { mdiTransmissionTower } from "@mdi/js";
+import { mdiTransmissionTower, mdiHelpRhombus } from "@mdi/js";
 
 import { customElement, property } from "lit/decorators";
 
@@ -345,8 +345,9 @@ export class ElecSankey extends LitElement {
       if (this.gridInRoute === undefined && this.gridOutRoute === undefined) {
         // If we aren't tracking grid sources, create a phantom one.
         this._phantomGridInRoute = {
-          id: "untracked",
-          text: "Unknown",
+          id: "unknown_source",
+          text: "Unknown source",
+          icon: mdiHelpRhombus,
           rate: x,
         };
         this._phantomGenerationInRoute = undefined;
@@ -357,6 +358,7 @@ export class ElecSankey extends LitElement {
         this._phantomGenerationInRoute = {
           id: "untracked",
           text: "Unknown",
+          icon: mdiHelpRhombus,
           rate: x,
         };
         this._untrackedConsumerRoute.rate = 0;
@@ -521,16 +523,24 @@ export class ElecSankey extends LitElement {
     _id: string | undefined,
     icon: string | undefined,
     _name: string | undefined,
-    value: number
+    valueA: number,
+    valueB: number | undefined
   ): TemplateResult {
-    const valueRounded = Math.round(value * 10) / 10;
+    const valueARounded = Math.round(valueA * 10) / 10;
+    const valueBRounded = valueB ? Math.round(valueB * 10) / 10 : undefined;
+
     return html`
       <div>
         <svg x="0" y="0" height=${ICON_SIZE_PX}>
           <path d=${icon} />
         </svg>
         <br />
-        ${valueRounded} ${this.unit}
+        ${valueBRounded
+          ? html`
+              OUT ${valueBRounded} ${this.unit}<br />
+              IN ${valueARounded} ${this.unit}
+            `
+          : html` ${valueARounded} ${this.unit} `}
       </div>
     `;
   }
@@ -685,7 +695,15 @@ export class ElecSankey extends LitElement {
     const x_width = topRightX - GRID_ORIGIN_X;
     const x3 = topRightX;
     const y3 = topRightY + width;
-    const rate = this.gridInRoute.rate;
+    let rateA;
+    let rateB;
+    if (this.gridInRoute && this.gridOutRoute) {
+      rateA = this._gridImport();
+      rateB = this._gridExport();
+    } else {
+      rateA = this._gridImport();
+    }
+
     const midX = startTerminatorX - ICON_SIZE_PX * 2;
     const midY = startTerminatorY + width / 2;
 
@@ -711,7 +729,8 @@ export class ElecSankey extends LitElement {
         this.gridInRoute.id,
         mdiTransmissionTower,
         undefined,
-        rate
+        rateA,
+        rateB
       )}
     </div>`;
 

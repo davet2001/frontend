@@ -1,6 +1,7 @@
 import { customElement, property } from "lit/decorators";
 
 import { TemplateResult, css, html, nothing } from "lit";
+import { mdiArrowLeft, mdiArrowRight } from "@mdi/js";
 import { HomeAssistant } from "../../types";
 import { ElecSankey } from "./elec-sankey";
 // import { ElecSankeyEnhanced } from "./elec-sankey-enhanced";
@@ -16,7 +17,8 @@ export class HaElecSankey extends ElecSankey {
     id: string | undefined,
     icon: string | undefined,
     _name: string | undefined,
-    value: number
+    valueA: number,
+    valueB: number | undefined
   ): TemplateResult {
     return html`
       <div
@@ -28,9 +30,20 @@ export class HaElecSankey extends ElecSankey {
         ${icon
           ? html`<ha-svg-icon .path=${icon}> </ha-svg-icon><br />`
           : nothing}
-        ${formatNumber(value, this.hass.locale, {
-          maximumFractionDigits: 1,
-        })}&nbsp;${this.unit}
+        ${valueB
+          ? html`
+              <ha-svg-icon class="small" .path=${mdiArrowLeft}></ha-svg-icon>
+              ${formatNumber(valueB, this.hass.locale, {
+                maximumFractionDigits: 1,
+              })}&nbsp;${this.unit}<br />
+              <ha-svg-icon class="small" .path=${mdiArrowRight}></ha-svg-icon>
+              ${formatNumber(valueA, this.hass.locale, {
+                maximumFractionDigits: 1,
+              })}&nbsp;${this.unit}
+            `
+          : html`${formatNumber(valueA, this.hass.locale, {
+              maximumFractionDigits: 1,
+            })}&nbsp;${this.unit}`}
       </div>
     `;
   }
