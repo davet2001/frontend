@@ -338,7 +338,7 @@ export class ElecSankey extends LitElement {
     const consumerTrackedTotal = this._consumerTrackedTotal();
 
     // Balance the books.
-    const x =
+    let x =
       consumerTrackedTotal - gridImport - (generationTrackedTotal - gridExport);
     if (x > 0) {
       // There is an unknown energy source.
@@ -365,8 +365,21 @@ export class ElecSankey extends LitElement {
       }
     } else {
       // There is an untracked energy consumer (normal situation).
+      // Edge case: if we are exporting more than we are generating, we
+      // must have an untracked generation source.
+      if (gridExport > generationTrackedTotal) {
+        const untrackedGeneration = gridExport - generationTrackedTotal;
+        x = consumerTrackedTotal - gridImport;
+        this._phantomGenerationInRoute = {
+          id: "unknown_source",
+          text: "Unknown source",
+          icon: mdiHelpRhombus,
+          rate: untrackedGeneration,
+        };
+      } else {
+        this._phantomGenerationInRoute = undefined;
+      }
       this._phantomGridInRoute = undefined;
-      this._phantomGenerationInRoute = undefined;
       this._untrackedConsumerRoute.rate = -x;
     }
 
