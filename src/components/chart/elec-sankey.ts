@@ -978,9 +978,11 @@ export class ElecSankey extends LitElement {
     if (!this.gridInRoute) {
       return 0;
     }
-    const grid = this.gridInRoute.rate;
+    const grid = this.gridInRoute.rate > 0 ? this.gridInRoute.rate : 0;
     const renewable =
-      this._generationTrackedTotal() + this._generationPhantom();
+      this._generationTrackedTotal() +
+      this._generationPhantom() -
+      this._gridExport();
     const ratio = grid / (grid + renewable);
     if (ratio < 0) {
       return 0;
