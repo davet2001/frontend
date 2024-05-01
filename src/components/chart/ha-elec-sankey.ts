@@ -31,16 +31,18 @@ export class HaElecSankey extends ElecSankey {
           ? html`<ha-svg-icon .path=${icon}> </ha-svg-icon><br />`
           : nothing}
         ${valueB
-          ? html`
-              <ha-svg-icon class="small" .path=${mdiArrowLeft}></ha-svg-icon>
-              ${formatNumber(valueB, this.hass.locale, {
-                maximumFractionDigits: 1,
-              })}&nbsp;${this.unit}<br />
-              <ha-svg-icon class="small" .path=${mdiArrowRight}></ha-svg-icon>
-              ${formatNumber(valueA, this.hass.locale, {
-                maximumFractionDigits: 1,
-              })}&nbsp;${this.unit}
-            `
+          ? html` <span class="return">
+                <ha-svg-icon class="small" .path=${mdiArrowLeft}> </ha-svg-icon
+                >${formatNumber(valueB, this.hass.locale, {
+                  maximumFractionDigits: 1,
+                })}&nbsp;${this.unit}</span
+              ><br />
+              <span class="consumption">
+                <ha-svg-icon class="small" .path=${mdiArrowRight}> </ha-svg-icon
+                >${formatNumber(valueA, this.hass.locale, {
+                  maximumFractionDigits: 1,
+                })}&nbsp;${this.unit}
+              </span>`
           : html`${formatNumber(valueA, this.hass.locale, {
               maximumFractionDigits: 1,
             })}&nbsp;${this.unit}`}
@@ -68,6 +70,15 @@ export class HaElecSankey extends ElecSankey {
       }
       ha-svg-icon {
         --icon-primary-color: var(--icon-primary-color);
+      }
+      ha-svg-icon.small {
+        --mdc-icon-size: 12px;
+      }
+      .consumption {
+        color: var(--energy-grid-consumption-color);
+      }
+      .return {
+        color: var(--energy-grid-return-color);
       }
     `,
   ];

@@ -399,6 +399,9 @@ export class ElecSankey extends LitElement {
         "gridImport = " +
         gridImport +
         "\n" +
+        "gridExport = " +
+        gridExport +
+        "\n" +
         "netGridImport = " +
         netGridImport +
         "\n" +
@@ -484,6 +487,16 @@ export class ElecSankey extends LitElement {
     }
     if (this.gridInRoute.rate > 0) {
       return this._rateToWidth(this.gridInRoute.rate);
+    }
+    return 0;
+  }
+
+  private _gridOutFlowWidth(): number {
+    if (this.gridOutRoute === undefined) {
+      return 0;
+    }
+    if (this.gridOutRoute.rate > 0) {
+      return this._rateToWidth(this.gridOutRoute.rate);
     }
     return 0;
   }
@@ -687,14 +700,15 @@ export class ElecSankey extends LitElement {
     if (!this.gridInRoute) {
       return [nothing, svg``, topRightX, topRightY];
     }
-    const width = this._gridInFlowWidth();
+    const in_width = this._gridInFlowWidth();
+    const tot_width = this._gridInFlowWidth() + this._gridOutFlowWidth();
 
     const startTerminatorX = GRID_ORIGIN_X;
     const startTerminatorY = topRightY;
 
     const x_width = topRightX - GRID_ORIGIN_X;
     const x3 = topRightX;
-    const y3 = topRightY + width;
+    const y3 = topRightY + in_width;
     let rateA;
     let rateB;
     if (this.gridInRoute && this.gridOutRoute) {
@@ -704,26 +718,13 @@ export class ElecSankey extends LitElement {
       rateA = this._gridImport();
     }
 
-    const midX = startTerminatorX - ICON_SIZE_PX * 2;
-    const midY = startTerminatorY + width / 2;
-
-    const iconX = midX - ICON_SIZE_PX / 2;
-    const iconY = midY - (ICON_SIZE_PX + TEXT_PADDING + FONT_SIZE_PX) / 2;
-
-    // iconX = 0;
-    // iconY = 0;
-    // const svgIcon = this.gridInRoute.html
-    //   ? nothing
-    //   : svg`
-    //   <svg x=${iconX} y=${iconY}>
-    //     <path d=${mdiTransmissionTower} />
-    //   </svg>`;
-
-    // const divRet = this._generateLabelDiv(mdiTransmissionTower, 99);
+    const midY = startTerminatorY - this._gridOutFlowWidth() + tot_width / 2;
+    const divHeight = ICON_SIZE_PX + TEXT_PADDING + FONT_SIZE_PX * 2;
     const divRet = html`<div
       width=${ICON_SIZE_PX * 2}
       class="label elecroute-label-grid"
-      style="left: ${iconX}px; top: ${iconY}px;"
+      style="left: 0px; height:${divHeight}px;
+      top: ${midY}px; margin: ${-divHeight / 2}px 0 0 0px;"
     >
       ${this._generateLabelDiv(
         this.gridInRoute.id,
@@ -734,23 +735,18 @@ export class ElecSankey extends LitElement {
       )}
     </div>`;
 
-    // <text text-anchor="middle"
-    // x="${midX}"
-    // y="${
-    //   iconY + ICON_SIZE_PX + TEXT_PADDING + FONT_SIZE_PX / 2
-    // }">${rate}WF</text>
     const svgRet = svg`
     <rect
       class="grid"
       id="grid-in-rect"
       x="${startTerminatorX}"
       y="${startTerminatorY}"
-      height="${width}"
+      height="${in_width}"
       width="${x_width}"
     />
     <polygon points="${startTerminatorX},${startTerminatorY}
-    ${startTerminatorX},${startTerminatorY + width}
-    ${startTerminatorX + ARROW_HEAD_LENGTH},${startTerminatorY + width / 2}"
+    ${startTerminatorX},${startTerminatorY + in_width}
+    ${startTerminatorX + ARROW_HEAD_LENGTH},${startTerminatorY + in_width / 2}"
     class="tint"/>
   `;
     return [divRet, svgRet, x3, y3];

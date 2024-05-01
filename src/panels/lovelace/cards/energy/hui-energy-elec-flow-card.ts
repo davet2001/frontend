@@ -44,6 +44,8 @@ export class HuiEnergyElecFlowCard
 
   @state() private _gridInRoute?: ElecRoute;
 
+  @state() private _gridOutRoute?: ElecRoute;
+
   @state() private _generationInRoutes: { [id: string]: ElecRoute } = {};
 
   @state() private _consumerRoutes: { [id: string]: ElecRoute } = {};
@@ -83,6 +85,7 @@ export class HuiEnergyElecFlowCard
           <ha-energy-sankey
             .hass=${this.hass}
             .gridInRoute=${this._gridInRoute ? this._gridInRoute : undefined}
+            .gridOutRoute=${this._gridOutRoute ? this._gridOutRoute : undefined}
             .generationInRoutes=${this._generationInRoutes
               ? this._generationInRoutes
               : {}}
@@ -107,10 +110,19 @@ export class HuiEnergyElecFlowCard
         energyData.stats,
         types.grid![0].flow_from.map((flow) => flow.stat_energy_from)
       ) ?? 0;
-
     this._gridInRoute = {
       id: "grid-in-all",
       rate: totalFromGrid,
+    };
+
+    const totalToGrid =
+      calculateStatisticsSumGrowth(
+        energyData.stats,
+        types.grid![0].flow_to.map((flow) => flow.stat_energy_to)
+      ) ?? 0;
+    this._gridOutRoute = {
+      id: "grid-out-all",
+      rate: totalToGrid,
     };
 
     solarSources.forEach((source) => {
