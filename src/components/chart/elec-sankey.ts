@@ -591,7 +591,6 @@ export class ElecSankey extends LitElement {
     y2: number
   ): [TemplateResult[], TemplateResult] {
     const totalGenWidth = this._generationInFlowWidth();
-    const widthToGrid = this._generationToGridFlowWidth();
     const genToConsWidth = this._generationToConsumersFlowWidth();
 
     const count =
@@ -664,7 +663,7 @@ export class ElecSankey extends LitElement {
         ? renderFlowByCorners(
             x0 + totalGenWidth,
             PV_ORIGIN_Y + TERMINATOR_BLOCK_LENGTH - PAD_ANTIALIAS,
-            x0 + widthToGrid,
+            x0 + totalGenWidth - genToConsWidth,
             PV_ORIGIN_Y + TERMINATOR_BLOCK_LENGTH - PAD_ANTIALIAS,
             x1,
             y1,
@@ -734,14 +733,8 @@ export class ElecSankey extends LitElement {
     const x_width = topRightX - GRID_ORIGIN_X;
     const x3 = topRightX;
     const y3 = topRightY + in_width;
-    let rateA;
-    let rateB;
-    if (this.gridInRoute && this.gridOutRoute) {
-      rateA = this._gridImport();
-      rateB = this._gridExport();
-    } else {
-      rateA = this._gridImport();
-    }
+    const rateA = this._gridImport();
+    const rateB = this._gridExport();
 
     const midY = startTerminatorY - this._gridOutFlowWidth() + tot_width / 2;
     const divHeight = ICON_SIZE_PX + TEXT_PADDING + FONT_SIZE_PX * 2;
@@ -929,7 +922,7 @@ export class ElecSankey extends LitElement {
         style="fill:${color}" />
     `;
 
-    const bottomLeftY = topLeftY + width;
+    const bottomLeftY = topLeftY + (consumer.rate !== 0 ? width : 0);
     const bottomRightY = topRightY + width;
     return [divRet, svgRet, bottomLeftY, bottomRightY];
   }

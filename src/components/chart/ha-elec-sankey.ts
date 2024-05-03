@@ -30,7 +30,7 @@ export class HaElecSankey extends ElecSankey {
         ${icon
           ? html`<ha-svg-icon .path=${icon}> </ha-svg-icon><br />`
           : nothing}
-        ${valueB
+        ${valueB !== undefined
           ? html` <span class="return">
                 <ha-svg-icon class="small" .path=${mdiArrowLeft}> </ha-svg-icon
                 >${formatNumber(valueB, this.hass.locale, {
