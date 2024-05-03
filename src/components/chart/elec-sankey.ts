@@ -23,7 +23,7 @@ const CONSUMERS_FAN_OUT_VERTICAL_GAP = 50;
 const CONSUMERS_FAN_OUT_HORIZONTAL_SPAN = 200;
 const CONSUMERS_LABEL_WIDTH = 180;
 
-const TARGET_SCALED_TRUNK_WIDTH = 150;
+const TARGET_SCALED_TRUNK_WIDTH = 90;
 
 const PV_COLOR = "#0d6a04";
 const GRID_IN_COLOR = "#920e83";
@@ -36,7 +36,7 @@ const TEXT_PADDING = 8;
 const FONT_SIZE_PX = 16;
 const ICON_SIZE_PX = 24;
 
-const PV_ORIGIN_X = 500;
+const PV_ORIGIN_X = 300;
 const PV_ORIGIN_Y = 0 + TEXT_PADDING * 2 + FONT_SIZE_PX + ICON_SIZE_PX;
 
 const GRID_ORIGIN_X = 80;
@@ -208,12 +208,17 @@ function renderFlowByCorners(
   return svg_ret;
 }
 
-function debugPoint(x: number, y: number, label: string): TemplateResult {
-  return svg`
-    <circle cx="${x}" cy="${y}" r="3" fill="#22DDDD" />
-    <text x="${x - 13}" y="${y - 6}" font-size="10px">${label}</text>
-`;
-}
+// function debugPoint(x: number, y: number, label: string): TemplateResult {
+//   return svg`
+//     <circle cx="${x}" cy="${y}" r="3" fill="#22DDDD" />
+//     <text x="${x - 13}" y="${y - 6}" font-size="10px">${label}</text>
+// `;
+// }
+// ${debugPoint(x0, y0, "x0,y0")}
+// ${debugPoint(x1, y1, "x1,y1")} ${debugPoint(x2, y2, "x2,y2")}
+// ${debugPoint(x3, y3, "x3,y3")} ${debugPoint(x4, y4, "x4,y4")}
+// ${debugPoint(x5, y5, "x5,y5")} ${debugPoint(x6, y6, "x6,y6")}
+// ${debugPoint(x7, y7, "x7,y7")} ${debugPoint(x10, y10, "x10,y10")}
 
 /**
  * Creates a flow map graphic showing the flow of electricity.
@@ -293,31 +298,21 @@ export class ElecSankey extends LitElement {
     return this._generationTrackedTotal() + this._generationPhantom();
   }
 
-  private _netGridImport(): number {
-    if (this.gridInRoute && this.gridOutRoute) {
-      return this.gridInRoute.rate - this.gridOutRoute.rate;
-    }
-    if (this.gridInRoute === undefined && this.gridOutRoute) {
-      return -this.gridOutRoute.rate;
-    }
-    if (this.gridInRoute && this.gridOutRoute === undefined) {
-      return this.gridInRoute.rate;
-    }
-    return 0;
-  }
-
   private _gridImport(): number {
     if (this.gridInRoute) {
       return this.gridInRoute.rate > 0 ? this.gridInRoute.rate : 0;
     }
-    return this._netGridImport();
+    return 0;
   }
 
   private _gridExport(): number {
     if (this.gridOutRoute) {
-      return this.gridOutRoute.rate;
+      return this.gridOutRoute.rate > 0 ? this.gridOutRoute.rate : 0;
     }
-    return -this._netGridImport();
+    if (this.gridInRoute) {
+      return this.gridInRoute.rate < 0 ? -this.gridInRoute.rate : 0;
+    }
+    return 0;
   }
 
   private _consumerTrackedTotal(): number {
@@ -333,55 +328,75 @@ export class ElecSankey extends LitElement {
   private _recalculate() {
     const gridImport = this._gridImport();
     const gridExport = this._gridExport();
-    const netGridImport = this._netGridImport();
+    const netGridImport = this._gridImport() - this._gridExport();
     const generationTrackedTotal = this._generationTrackedTotal();
     const consumerTrackedTotal = this._consumerTrackedTotal();
 
     // Balance the books.
-    let x =
-      consumerTrackedTotal - gridImport - (generationTrackedTotal - gridExport);
+
+    let phantomGridIn = 0;
+    let phantomGeneration = 0;
+    let untrackedConsumer = 0;
+
+    // First check if we are exporting more than we are generating.
+    let x = gridExport - generationTrackedTotal;
+    if (x > 0) {
+      phantomGeneration = x;
+    }
+    // Do we have an excess of consumption?
+    x =
+      consumerTrackedTotal -
+      gridImport -
+      generationTrackedTotal -
+      phantomGeneration;
     if (x > 0) {
       // There is an unknown energy source.
       if (this.gridInRoute === undefined && this.gridOutRoute === undefined) {
         // If we aren't tracking grid sources, create a phantom one.
-        this._phantomGridInRoute = {
-          id: "unknown_source",
-          text: "Unknown source",
-          icon: mdiHelpRhombus,
-          rate: x,
-        };
-        this._phantomGenerationInRoute = undefined;
-        this._untrackedConsumerRoute.rate = 0;
-      } else {
-        // Otherwise, best guess is now a phantom generation source.
-        this._phantomGridInRoute = undefined;
-        this._phantomGenerationInRoute = {
-          id: "untracked",
-          text: "Unknown",
-          icon: mdiHelpRhombus,
-          rate: x,
-        };
-        this._untrackedConsumerRoute.rate = 0;
+        phantomGridIn = x;
       }
-    } else {
-      // There is an untracked energy consumer (normal situation).
-      // Edge case: if we are exporting more than we are generating, we
-      // must have an untracked generation source.
-      if (gridExport > generationTrackedTotal) {
-        const untrackedGeneration = gridExport - generationTrackedTotal;
-        x = consumerTrackedTotal - gridImport;
-        this._phantomGenerationInRoute = {
-          id: "unknown_source",
-          text: "Unknown source",
-          icon: mdiHelpRhombus,
-          rate: untrackedGeneration,
-        };
-      } else {
-        this._phantomGenerationInRoute = undefined;
-      }
-      this._phantomGridInRoute = undefined;
-      this._untrackedConsumerRoute.rate = -x;
     }
+    // Retry balance - are we consuming more than we are generating/importing?
+    x =
+      consumerTrackedTotal -
+      gridImport -
+      phantomGridIn -
+      phantomGeneration -
+      (generationTrackedTotal - gridExport);
+    if (x > 0) {
+      // We must have an unknown generation source
+      phantomGeneration += x;
+    }
+
+    x =
+      consumerTrackedTotal -
+      gridImport -
+      phantomGridIn -
+      (generationTrackedTotal + phantomGeneration - gridExport);
+    if (x < 0) {
+      // There is an untracked energy consumer.
+      untrackedConsumer = -x;
+    }
+
+    this._phantomGridInRoute =
+      phantomGridIn > 0
+        ? {
+            id: "unknown_source",
+            text: "Unknown source",
+            icon: mdiHelpRhombus,
+            rate: phantomGridIn,
+          }
+        : undefined;
+    this._phantomGenerationInRoute =
+      phantomGeneration > 0
+        ? {
+            id: "unknown_source",
+            text: "Unknown source",
+            icon: mdiHelpRhombus,
+            rate: phantomGeneration,
+          }
+        : undefined;
+    this._untrackedConsumerRoute.rate = untrackedConsumer;
 
     /**
      * Calculate and update a scaling factor to make the UI look sensible.
@@ -447,6 +462,15 @@ export class ElecSankey extends LitElement {
     );
   }
 
+  private _generationToConsumers(): number {
+    // @todo if we support batteries in the future, need to modify this.
+    const genToGrid = this._gridExport();
+    if (genToGrid > 0) {
+      return this._generationTotal() - genToGrid;
+    }
+    return this._generationTotal();
+  }
+
   private _rateToWidth(rate: number): number {
     const value = rate * this._rateToWidthMultplier;
     return value > 1 ? value : 1;
@@ -459,23 +483,7 @@ export class ElecSankey extends LitElement {
   }
 
   private _generationToConsumersFlowWidth(): number {
-    if (this._gridExport() > 0) {
-      return this._rateToWidth(this._generationTotal() - this._gridExport());
-    }
-    return this._rateToWidth(this._generationTotal());
-
-    // if (this._netGridImport() > 0) {
-    // )
-    // if (this.gridInRoute === undefined || this.gridInRoute.rate > 0) {
-    //   return (
-    //     this._generationInFlowWidth() + this._phantomGenerationInFlowWidth()
-    //   );
-    // }
-    // return (
-    //   this._generationInFlowWidth() +
-    //   this._phantomGenerationInFlowWidth() -
-    //   this._rateToWidth(-this.gridInRoute.rate)
-    // );
+    return this._rateToWidth(this._generationToConsumers());
   }
 
   private _generationToGridFlowWidth(): number {
@@ -584,6 +592,7 @@ export class ElecSankey extends LitElement {
   ): [TemplateResult[], TemplateResult] {
     const totalGenWidth = this._generationInFlowWidth();
     const widthToGrid = this._generationToGridFlowWidth();
+    const genToConsWidth = this._generationToConsumersFlowWidth();
 
     const count =
       Object.keys(this.generationInRoutes).length +
@@ -650,17 +659,20 @@ export class ElecSankey extends LitElement {
       }
     }
 
-    const generatedFlowPath2 = renderFlowByCorners(
-      x0 + totalGenWidth,
-      PV_ORIGIN_Y + TERMINATOR_BLOCK_LENGTH - PAD_ANTIALIAS,
-      x0 + widthToGrid,
-      PV_ORIGIN_Y + TERMINATOR_BLOCK_LENGTH - PAD_ANTIALIAS,
-      x1,
-      y1,
-      x2,
-      y2,
-      "solar"
-    );
+    const generatedFlowPath2 =
+      genToConsWidth > 0
+        ? renderFlowByCorners(
+            x0 + totalGenWidth,
+            PV_ORIGIN_Y + TERMINATOR_BLOCK_LENGTH - PAD_ANTIALIAS,
+            x0 + widthToGrid,
+            PV_ORIGIN_Y + TERMINATOR_BLOCK_LENGTH - PAD_ANTIALIAS,
+            x1,
+            y1,
+            x2,
+            y2,
+            "solar"
+          )
+        : svg``;
     const svgRet = svg`
     ${svgArray}
     ${generatedFlowPath2}
@@ -775,7 +787,8 @@ export class ElecSankey extends LitElement {
     const x4: number = x1 + BLEND_LENGTH;
     const y4: number = y1;
 
-    const svgRet = svg`
+    const svgRet = width
+      ? svg`
     <defs>
       <linearGradient id="grad_grid" x1="0%" y1="0%" x2="100%" y2="0%">
         <stop offset="0%" style="stop-color:${this._pvColor()};stop-opacity:1" />
@@ -790,7 +803,8 @@ export class ElecSankey extends LitElement {
       width="${BLEND_LENGTH + 2 * PAD_ANTIALIAS}"
       fill="url(#grad_grid)"
     />
-  `;
+  `
+      : svg``;
     return [svgRet, x4, y4];
   }
 
@@ -1058,7 +1072,7 @@ export class ElecSankey extends LitElement {
       x10,
       y10
     );
-    const [gridInDiv, gridInFlowSvg, x3, y3] = this.renderGridInFlow(x2, y2);
+    const [gridInDiv, gridInFlowSvg, _x3, _y3] = this.renderGridInFlow(x2, y2);
     const blendColor = this._rateInBlendColor();
 
     const [pvInBlendFlowSvg, x4, y4] = this.renderPVInBlendFlow(
@@ -1066,12 +1080,12 @@ export class ElecSankey extends LitElement {
       y1,
       blendColor
     );
-    const [gridInBlendFlowSvg, x5, y5] = this.renderGridInBlendFlow(
+    const [gridInBlendFlowSvg, _x5, y5] = this.renderGridInBlendFlow(
       x2,
       y2,
       blendColor
     );
-    const [blendedFlowPreFanOut, x6, y6, x7, y7] =
+    const [blendedFlowPreFanOut, x6, y6, _x7, y7] =
       this._renderBlendedFlowPreFanOut(x4, y4, y5, blendColor);
     const [consOutFlowsDiv, consOutFlowsSvg, y8] = this._renderConsumerFlows(
       x6,
@@ -1086,11 +1100,7 @@ export class ElecSankey extends LitElement {
       <svg width="100%" height=${ymax}>
         ${pvInFlowSvg} ${generationToGridFlowSvg} ${gridInFlowSvg}
         ${pvInBlendFlowSvg} ${gridInBlendFlowSvg} ${blendedFlowPreFanOut}
-        ${consOutFlowsSvg} ${debugPoint(x0, y0, "x0,y0")}
-        ${debugPoint(x1, y1, "x1,y1")} ${debugPoint(x2, y2, "x2,y2")}
-        ${debugPoint(x3, y3, "x3,y3")} ${debugPoint(x4, y4, "x4,y4")}
-        ${debugPoint(x5, y5, "x5,y5")} ${debugPoint(x6, y6, "x6,y6")}
-        ${debugPoint(x7, y7, "x7,y7")} ${debugPoint(x10, y10, "x10,y10")}
+        ${consOutFlowsSvg}
       </svg>
     </div>`;
   }
