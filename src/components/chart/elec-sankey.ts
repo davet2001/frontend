@@ -20,7 +20,6 @@ import { customElement, property } from "lit/decorators";
 const TERMINATOR_BLOCK_LENGTH = 50;
 const GENERATION_FAN_OUT_HORIZONTAL_GAP = 50;
 const CONSUMERS_FAN_OUT_VERTICAL_GAP = 50;
-const CONSUMERS_FAN_OUT_HORIZONTAL_SPAN = 200;
 const CONSUMER_LABEL_HEIGHT = 50;
 
 const TARGET_SCALED_TRUNK_WIDTH = 90;
@@ -28,8 +27,8 @@ const TARGET_SCALED_TRUNK_WIDTH = 90;
 const PV_COLOR = "#0d6a04";
 const GRID_IN_COLOR = "#920e83";
 
-const BLEND_LENGTH = 100;
-const BLEND_LENGTH_PRE_FAN_OUT = 30;
+const BLEND_LENGTH = 80;
+const BLEND_LENGTH_PRE_FAN_OUT = 20;
 
 const ARROW_HEAD_LENGTH = 10;
 const TEXT_PADDING = 8;
@@ -781,20 +780,20 @@ export class ElecSankey extends LitElement {
   ): [TemplateResult, number, number] {
     const width = this._generationToConsumersFlowWidth();
 
-    const x4: number = x1 + BLEND_LENGTH;
+    const x4: number = BLEND_LENGTH;
     const y4: number = y1;
 
     const svgRet = width
       ? svg`
     <defs>
-      <linearGradient id="grad_grid" x1="0%" y1="0%" x2="100%" y2="0%">
+      <linearGradient id="grad_grid" 0="0%" y1="0%" x2="100%" y2="0%">
         <stop offset="0%" style="stop-color:${this._pvColor()};stop-opacity:1" />
         <stop offset="100%" style="stop-color:${endColor};stop-opacity:1" />
       </linearGradient>
     </defs>
     <rect
       id="pv-in-blend-rect"
-      x="${x1 - PAD_ANTIALIAS}"
+      x=0
       y="${y1}"
       height="${width}"
       width="${BLEND_LENGTH + 2 * PAD_ANTIALIAS}"
@@ -812,7 +811,7 @@ export class ElecSankey extends LitElement {
   ): [TemplateResult, number, number] {
     const width = this._gridInFlowWidth();
 
-    const x5 = x2 + BLEND_LENGTH;
+    const x5 = BLEND_LENGTH;
     const y5 = y2 + width;
 
     const svgRet = svg`
@@ -824,7 +823,7 @@ export class ElecSankey extends LitElement {
     </defs>
     <rect
       id="grid-in-blend-rect"
-      x="${x2}"
+      x=0
       y="${y2}"
       height="${width}"
       width="${BLEND_LENGTH + 1}"
@@ -941,8 +940,8 @@ export class ElecSankey extends LitElement {
     // this._recalculateUntrackedRate();
     const divRetArray: Array<TemplateResult> = [];
     const svgRetArray: Array<TemplateResult> = [];
-    const xLeft = x6;
-    const xRight = x6 + CONSUMERS_FAN_OUT_HORIZONTAL_SPAN;
+    const xLeft = 0;
+    const xRight = 100 - ARROW_HEAD_LENGTH;
     let i = 0;
     const total_height = this._consumersFanOutTotalHeight();
     let yLeft = y6;
@@ -1083,8 +1082,8 @@ export class ElecSankey extends LitElement {
     const [blendedFlowPreFanOut, x6, y6, _x7, y7] =
       this._renderBlendedFlowPreFanOut(x4, y4, y5, blendColor);
 
-    const svgCanvasWidth = x6 + 220;
-    const svgVisibleWidth = 1500;
+    const svgCanvasWidth = x1;
+    const svgVisibleWidth = 350;
     const svgScaleX = svgVisibleWidth / svgCanvasWidth;
 
     const [gridInDiv, gridInFlowSvg, _x3, _y3] = this.renderGridInFlow(
@@ -1117,15 +1116,39 @@ export class ElecSankey extends LitElement {
       </div>
       <div class="col2 container">
         <div class="col2top container">${pvInFlowDiv}</div>
-        <svg
-          viewBox="0 0 ${svgCanvasWidth} ${ymax}"
-          style="min-width: ${svgVisibleWidth}px"
-          preserveAspectRatio="xMidYMid slice"
-        >
-          ${pvInFlowSvg} ${generationToGridFlowSvg} ${gridInFlowSvg}
-          ${pvInBlendFlowSvg} ${gridInBlendFlowSvg} ${blendedFlowPreFanOut}
-          ${consOutFlowsSvg}
-        </svg>
+        <div class="col2bottom container">
+          <div class="sankey-left">
+            <svg
+              viewBox="0 0 ${svgCanvasWidth} ${ymax}"
+              width="100%"
+              style="min-width: ${svgVisibleWidth}px"
+              height=${ymax * svgScaleX}
+              preserveAspectRatio="none"
+            >
+              ${pvInFlowSvg} ${generationToGridFlowSvg} ${gridInFlowSvg}
+            </svg>
+          </div>
+          <div class="sankey-mid">
+            <svg
+              viewBox="0 0 100 ${ymax}"
+              width="100%"
+              height=${ymax * svgScaleX}
+              preserveAspectRatio="none"
+            >
+              ${pvInBlendFlowSvg} ${gridInBlendFlowSvg} ${blendedFlowPreFanOut}
+            </svg>
+          </div>
+          <div class="sankey-right">
+            <svg
+              viewBox="0 0 100 ${ymax}"
+              width="100%"
+              height=${ymax * svgScaleX}
+              preserveAspectRatio="none"
+            >
+              ${consOutFlowsSvg}
+            </svg>
+          </div>
+        </div>
       </div>
       <div class="col3 container">
         <div class="col3top padding"></div>
@@ -1135,19 +1158,10 @@ export class ElecSankey extends LitElement {
   }
 
   static styles: CSSResultGroup = css`
-    svg {
-      border: 1px solid #aaa;
-    }
     .card-content {
       position: relative;
       direction: ltr;
       display: flex;
-    }
-    .container {
-      border: 1px solid yellow;
-    }
-    .padding {
-      border: 1px solid yellow;
     }
     .col1 {
       flex: 1;
@@ -1158,16 +1172,32 @@ export class ElecSankey extends LitElement {
       height: 60px;
     }
     .col2 {
-      flex: 2;
-      width: 100%;
       align: top;
       justify-content: left;
-      flex-grow: 0;
+      flex-grow: 1;
     }
     .col2top {
       height: 60px;
       display: flex;
       justify-content: left;
+    }
+    .col2bottom {
+      display: flex;
+      justify-content: left;
+    }
+    .sankey-left {
+      flex: 1;
+      flex-grow: 0;
+    }
+    .sankey-mid {
+      flex: 1;
+      flex-grow: 1;
+      min-width: 20px;
+    }
+    .sankey-right {
+      flex: 1;
+      flex-grow: 2;
+      min-width: 50px;
     }
     .col3 {
       flex: 1;
