@@ -830,6 +830,7 @@ class HuiEnergyDistrubutionCard
       width: calc(100% - 160px);
       height: 100%;
       max-width: 340px;
+      border: 1px solid;
     }
     .row {
       display: flex;
@@ -841,6 +842,7 @@ class HuiEnergyDistrubutionCard
       display: flex;
       flex-direction: column;
       align-items: center;
+      border: 1px solid;
     }
     .circle-container.low-carbon {
       margin-right: 4px;

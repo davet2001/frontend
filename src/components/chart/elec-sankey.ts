@@ -4,7 +4,7 @@
  *
  */
 import {
-  CSSResultArray,
+  CSSResultGroup,
   LitElement,
   TemplateResult,
   css,
@@ -21,7 +21,7 @@ const TERMINATOR_BLOCK_LENGTH = 50;
 const GENERATION_FAN_OUT_HORIZONTAL_GAP = 50;
 const CONSUMERS_FAN_OUT_VERTICAL_GAP = 50;
 const CONSUMERS_FAN_OUT_HORIZONTAL_SPAN = 200;
-const CONSUMERS_LABEL_WIDTH = 180;
+const CONSUMER_LABEL_HEIGHT = 50;
 
 const TARGET_SCALED_TRUNK_WIDTH = 90;
 
@@ -36,10 +36,10 @@ const TEXT_PADDING = 8;
 const FONT_SIZE_PX = 16;
 const ICON_SIZE_PX = 24;
 
-const PV_ORIGIN_X = 300;
-const PV_ORIGIN_Y = 0 + TEXT_PADDING * 2 + FONT_SIZE_PX + ICON_SIZE_PX;
+const PV_ORIGIN_X = 150;
+const PV_ORIGIN_Y = 0;
 
-const GRID_ORIGIN_X = 80;
+const GRID_ORIGIN_X = 0;
 
 export const PAD_ANTIALIAS = 0.5;
 
@@ -558,7 +558,7 @@ export class ElecSankey extends LitElement {
     icon: string | undefined,
     _name: string | undefined,
     valueA: number,
-    valueB: number | undefined
+    valueB: number | undefined = undefined
   ): TemplateResult {
     const valueARounded = Math.round(valueA * 10) / 10;
     const valueBRounded = valueB ? Math.round(valueB * 10) / 10 : undefined;
@@ -588,7 +588,8 @@ export class ElecSankey extends LitElement {
     x1: number,
     y1: number,
     x2: number,
-    y2: number
+    y2: number,
+    svgScaleX: number = 1
   ): [TemplateResult[], TemplateResult] {
     const totalGenWidth = this._generationInFlowWidth();
     const genToConsWidth = this._generationToConsumersFlowWidth();
@@ -609,6 +610,8 @@ export class ElecSankey extends LitElement {
     if (this._phantomGenerationInRoute !== undefined) {
       routes.phantom = this._phantomGenerationInRoute;
     }
+    let i = 0;
+    // eslint-disable-next-line guard-for-in
     for (const key in routes) {
       if (Object.prototype.hasOwnProperty.call(routes, key)) {
         // const friendlyName = routes.text;
@@ -637,17 +640,16 @@ export class ElecSankey extends LitElement {
         );
 
         const midX = xA + width / 2;
-        const midY = (PV_ORIGIN_Y - 0) / 2;
-
-        const divHeight = PV_ORIGIN_Y - 0;
-        const divWidth = ICON_SIZE_PX * 3;
+        const LABEL_WIDTH = 72;
         const icon = routes[key].icon;
         if (icon) {
           divArray.push(
             html`<div
               class="label elecroute-label-horiz"
-              style="width: ${divWidth}px; left: ${midX}px; top: ${midY}px; margin: ${-divHeight /
-              2}px 0 0 ${-divWidth / 2}px;"
+              style="left: ${midX * svgScaleX -
+              (i * LABEL_WIDTH) /
+                2}px; flex-basis: ${LABEL_WIDTH}px; margin: 0 0 0 ${-LABEL_WIDTH /
+              2}px;"
             >
               ${this._generateLabelDiv(key, icon, undefined, rate)}
             </div>`
@@ -656,6 +658,7 @@ export class ElecSankey extends LitElement {
         xA += width + GENERATION_FAN_OUT_HORIZONTAL_GAP;
         xB += width;
       }
+      i++;
     }
 
     const generatedFlowPath2 =
@@ -719,7 +722,8 @@ export class ElecSankey extends LitElement {
 
   protected renderGridInFlow(
     topRightX: number,
-    topRightY: number
+    topRightY: number,
+    svgScaleX: number = 1
   ): [TemplateResult | null, TemplateResult, number, number] {
     if (!this.gridInRoute) {
       return [nothing, svg``, topRightX, topRightY];
@@ -742,7 +746,7 @@ export class ElecSankey extends LitElement {
       width=${ICON_SIZE_PX * 2}
       class="label elecroute-label-grid"
       style="left: 0px; height:${divHeight}px;
-      top: ${midY}px; margin: ${-divHeight / 2}px 0 0 0px;"
+      top: ${midY * svgScaleX}px; margin: ${-divHeight / 2}px 0 0 0px;"
     >
       ${this._generateLabelDiv(
         this.gridInRoute.id,
@@ -871,7 +875,9 @@ export class ElecSankey extends LitElement {
     topRightX: number,
     topRightY: number,
     consumer: ElecRoute,
-    color: string
+    color: string,
+    svgScaleX: number = 1,
+    count: number = 1
   ): [TemplateResult, TemplateResult, number, number] {
     const width = this._rateToWidth(consumer.rate);
     const xEnd = topRightX;
@@ -896,14 +902,12 @@ export class ElecSankey extends LitElement {
       consumer
     );
 
-    const xText = xEnd + ARROW_HEAD_LENGTH + TEXT_PADDING + extrasLength;
-    const yText = yEnd;
-    const divHeight = width + CONSUMERS_FAN_OUT_VERTICAL_GAP / 2;
-    const divWidth = CONSUMERS_LABEL_WIDTH;
+    const divHeight = CONSUMER_LABEL_HEIGHT;
     const divRet = html`<div
       class="label elecroute-label-consumer"
-      style="width: ${divWidth}px; height:${divHeight}px; left: ${xText}px;
-      top: ${yText}px; margin: ${-divHeight / 2}px 0 0 0px;"
+      style="height:${divHeight}px;
+      top: ${yEnd * svgScaleX -
+      (count * divHeight) / 2}px; margin: ${-divHeight / 2}px 0 0 0;"
     >
       ${this._generateLabelDiv(
         consumer.id,
@@ -931,14 +935,15 @@ export class ElecSankey extends LitElement {
     x6: number,
     y6: number,
     y7: number,
-    color: string
+    color: string,
+    svgScaleX: number
   ): [Array<TemplateResult>, Array<TemplateResult>, number] {
     // this._recalculateUntrackedRate();
     const divRetArray: Array<TemplateResult> = [];
     const svgRetArray: Array<TemplateResult> = [];
     const xLeft = x6;
     const xRight = x6 + CONSUMERS_FAN_OUT_HORIZONTAL_SPAN;
-
+    let i = 0;
     const total_height = this._consumersFanOutTotalHeight();
     let yLeft = y6;
     let yRight = (y6 + y7) / 2 - total_height / 2;
@@ -955,7 +960,9 @@ export class ElecSankey extends LitElement {
           xRight,
           yRight,
           this.consumerRoutes[key],
-          color
+          color,
+          svgScaleX,
+          i++
         );
         divRetArray.push(divRow);
         svgRetArray.push(svgRow);
@@ -969,7 +976,9 @@ export class ElecSankey extends LitElement {
       xRight,
       yRight,
       this._untrackedConsumerRoute,
-      color
+      color,
+      svgScaleX,
+      i++
     );
     divRetArray.push(divRow);
     svgRetArray.push(svgRow);
@@ -1052,20 +1061,13 @@ export class ElecSankey extends LitElement {
       </svg>`;
     }
     const [x0, y0, x1, y1, x2, y2, x10, y10] = this._calc_xy();
-    const [pvInFlowDiv, pvInFlowSvg] = this.renderGenerationToConsumersFlow(
-      x0,
-      x1,
-      y1,
-      x2,
-      y2
-    );
+
     const generationToGridFlowSvg = this.renderGenerationToGridFlow(
       x0,
       y0,
       x10,
       y10
     );
-    const [gridInDiv, gridInFlowSvg, _x3, _y3] = this.renderGridInFlow(x2, y2);
     const blendColor = this._rateInBlendColor();
 
     const [pvInBlendFlowSvg, x4, y4] = this.renderPVInBlendFlow(
@@ -1080,81 +1082,160 @@ export class ElecSankey extends LitElement {
     );
     const [blendedFlowPreFanOut, x6, y6, _x7, y7] =
       this._renderBlendedFlowPreFanOut(x4, y4, y5, blendColor);
+
+    const svgCanvasWidth = x6 + 220;
+    const svgVisibleWidth = 1500;
+    const svgScaleX = svgVisibleWidth / svgCanvasWidth;
+
+    const [gridInDiv, gridInFlowSvg, _x3, _y3] = this.renderGridInFlow(
+      x2,
+      y2,
+      svgScaleX
+    );
+
+    const [pvInFlowDiv, pvInFlowSvg] = this.renderGenerationToConsumersFlow(
+      x0,
+      x1,
+      y1,
+      x2,
+      y2,
+      svgScaleX
+    );
     const [consOutFlowsDiv, consOutFlowsSvg, y8] = this._renderConsumerFlows(
       x6,
       y6,
       y7,
-      blendColor
+      blendColor,
+      svgScaleX
     );
 
     const ymax = Math.max(y5, y8);
-    return html`<div style="position: relative;">
-      ${gridInDiv} ${pvInFlowDiv} ${consOutFlowsDiv}
-      <svg width="100%" height=${ymax}>
-        ${pvInFlowSvg} ${generationToGridFlowSvg} ${gridInFlowSvg}
-        ${pvInBlendFlowSvg} ${gridInBlendFlowSvg} ${blendedFlowPreFanOut}
-        ${consOutFlowsSvg}
-      </svg>
+    return html`<div class="card-content">
+      <div class="col1 container">
+        <div class="col1top padding"></div>
+        ${gridInDiv}
+      </div>
+      <div class="col2 container">
+        <div class="col2top container">${pvInFlowDiv}</div>
+        <svg
+          viewBox="0 0 ${svgCanvasWidth} ${ymax}"
+          style="min-width: ${svgVisibleWidth}px"
+          preserveAspectRatio="xMidYMid slice"
+        >
+          ${pvInFlowSvg} ${generationToGridFlowSvg} ${gridInFlowSvg}
+          ${pvInBlendFlowSvg} ${gridInBlendFlowSvg} ${blendedFlowPreFanOut}
+          ${consOutFlowsSvg}
+        </svg>
+      </div>
+      <div class="col3 container">
+        <div class="col3top padding"></div>
+        ${consOutFlowsDiv}
+      </div>
     </div>`;
   }
 
-  static get styles(): CSSResultArray {
-    return [
-      css`
-        div {
-          .label {
-            position: absolute;
-          }
-          .elecroute-label-grid {
-            text-align: center;
-          }
-          .elecroute-label-horiz {
-            text-align: center;
-          }
-          .elecroute-label-consumer {
-            text-align: left;
-            display: flex;
-            align-items: center;
-          }
-        }
-        svg {
-          rect {
-            stroke: none;
-            stroke-width: 0;
-          }
-          path {
-            stroke: none;
-            stroke-width: 0;
-          }
-          polygon {
-            stroke: none;
-          }
-          polygon.solar {
-            fill: var(--solar-color, #0d6a04);
-          }
-          polygon.tint {
-            fill: #000000;
-            opacity: 0.2;
-          }
-          path.flow {
-            fill: gray;
-          }
-          path.solar {
-            fill: var(--solar-color, #0d6a04);
-            stroke: var(--solar-color, #0d6a04);
-            stroke-width: 0;
-          }
-          rect.solar {
-            fill: var(--solar-color, #0d6a04);
-            stroke-width: 0;
-          }
-          rect.grid {
-            fill: var(--grid-in-color, #920e83);
-          }
-        }
-      `,
-    ];
-  }
+  static styles: CSSResultGroup = css`
+    svg {
+      border: 1px solid #aaa;
+    }
+    .card-content {
+      position: relative;
+      direction: ltr;
+      display: flex;
+    }
+    .container {
+      border: 1px solid yellow;
+    }
+    .padding {
+      border: 1px solid yellow;
+    }
+    .col1 {
+      flex: 1;
+      min-width: 60px;
+      max-width: 120px;
+    }
+    .col1top {
+      height: 60px;
+    }
+    .col2 {
+      flex: 2;
+      width: 100%;
+      align: top;
+      justify-content: left;
+      flex-grow: 0;
+    }
+    .col2top {
+      height: 60px;
+      display: flex;
+      justify-content: left;
+    }
+    .col3 {
+      flex: 1;
+      min-width: 80px;
+      max-width: 120px;
+    }
+    .col3top {
+      height: 60px;
+    }
+    .label {
+      flex: 1;
+      position: relative;
+    }
+    .elecroute-label-grid {
+      display: flex;
+      text-align: center;
+    }
+    .elecroute-label-horiz {
+      display: flex;
+      flex: 0 0 auto;
+      flex-grow: 0;
+      flex-shrink: 0;
+
+      text-align: center;
+    }
+    .elecroute-label-consumer {
+      display: flex;
+      align-items: center;
+      flex-grow: 0;
+      flex-shrink: 0;
+      justify-content: left;
+    }
+    svg {
+      rect {
+        stroke: none;
+        stroke-width: 0;
+      }
+      path {
+        stroke: none;
+        stroke-width: 0;
+      }
+      polygon {
+        stroke: none;
+      }
+      polygon.solar {
+        fill: var(--solar-color, #0d6a04);
+      }
+      polygon.tint {
+        fill: #000000;
+        opacity: 0.2;
+      }
+      path.flow {
+        fill: gray;
+      }
+      path.solar {
+        fill: var(--solar-color, #0d6a04);
+        stroke: var(--solar-color, #0d6a04);
+        stroke-width: 0;
+      }
+      rect.solar {
+        fill: var(--solar-color, #0d6a04);
+        stroke-width: 0;
+      }
+      rect.grid {
+        fill: var(--grid-in-color, #920e83);
+      }
+    }
+  `;
 }
 
 declare global {

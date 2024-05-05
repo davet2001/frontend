@@ -1,11 +1,11 @@
-import { css } from "lit";
+import { CSSResultArray, css } from "lit";
 import { customElement } from "lit/decorators";
 import { HaElecSankey } from "./ha-elec-sankey";
 
 @customElement("ha-energy-sankey")
 export class HaEnergySankey extends HaElecSankey {
-  static styles = [
-    super.styles,
+  static styles: CSSResultArray = [
+    HaElecSankey.styles,
     css`
       ha-card {
         height: 100%;
@@ -19,9 +19,9 @@ export class HaEnergySankey extends HaElecSankey {
       .has-header {
         padding-top: 0;
       }
-      .no-data {
-        position: absolute;
-        height: 100%;
+      /* .no-data {
+        // position: absolute;
+        // height: 100%;
         top: 0;
         left: 0;
         right: 0;
@@ -31,7 +31,7 @@ export class HaEnergySankey extends HaElecSankey {
         padding: 20%;
         margin-left: 32px;
         box-sizing: border-box;
-      }
+      } */
     `,
   ];
 }

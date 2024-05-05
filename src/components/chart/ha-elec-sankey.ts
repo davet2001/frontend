@@ -1,6 +1,6 @@
 import { customElement, property } from "lit/decorators";
 
-import { TemplateResult, css, html, nothing } from "lit";
+import { CSSResultArray, TemplateResult, css, html, nothing } from "lit";
 import { mdiArrowLeft, mdiArrowRight } from "@mdi/js";
 import { HomeAssistant } from "../../types";
 import { ElecSankey } from "./elec-sankey";
@@ -22,7 +22,7 @@ export class HaElecSankey extends ElecSankey {
   ): TemplateResult {
     return html`
       <div
-        class=${id ? "label-action-clickable" : "label-action"}
+        class=${id ? "label label-action-clickable" : "label"}
         id=${id || ""}
         @click=${id ? this._handleMoreInfo : nothing}
       >
@@ -57,16 +57,14 @@ export class HaElecSankey extends ElecSankey {
     });
   }
 
-  static styles = [
-    super.styles,
+  static styles: CSSResultArray = [
+    ElecSankey.styles,
     css`
-      div {
-        .label {
-          font-size: 12px;
-        }
-        .label-action-clickable {
-          cursor: pointer;
-        }
+      .label {
+        font-size: 12px;
+      }
+      .label-action-clickable {
+        cursor: pointer;
       }
       ha-svg-icon {
         --icon-primary-color: var(--icon-primary-color);
