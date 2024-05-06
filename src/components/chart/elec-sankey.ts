@@ -705,14 +705,14 @@ export class ElecSankey extends LitElement {
     return svg`
     ${generatedFlowPath}
     <rect
-      class="gen-grid-block"
+      class="generation"
       x="${GRID_ORIGIN_X + ARROW_HEAD_LENGTH}"
       y="${y10}"
       height="${width}"
       width="${x10 - GRID_ORIGIN_X - ARROW_HEAD_LENGTH}"
     />
     <polygon
-      class="gen-grid-arrow"
+      class="generation"
       points="${GRID_ORIGIN_X + ARROW_HEAD_LENGTH},${y10}
       ${GRID_ORIGIN_X + ARROW_HEAD_LENGTH},${y10 + width}
       ${GRID_ORIGIN_X},${y10 + width / 2}"
@@ -1247,7 +1247,7 @@ export class ElecSankey extends LitElement {
       polygon {
         stroke: none;
       }
-      polygon.gen-grid-arrow {
+      polygon.generation {
         fill: var(--generation-color, #0d6a04);
       }
       polygon.tint {
