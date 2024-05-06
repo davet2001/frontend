@@ -380,7 +380,6 @@ export class ElecSankey extends LitElement {
     this._phantomGridInRoute =
       phantomGridIn > 0
         ? {
-            id: "unknown_source",
             text: "Unknown source",
             icon: mdiHelpRhombus,
             rate: phantomGridIn,
@@ -563,7 +562,7 @@ export class ElecSankey extends LitElement {
     const valueBRounded = valueB ? Math.round(valueB * 10) / 10 : undefined;
 
     return html`
-      <div>
+      <div class="label">
         <svg x="0" y="0" height=${ICON_SIZE_PX}>
           <path d=${icon} />
         </svg>
@@ -1220,7 +1219,6 @@ export class ElecSankey extends LitElement {
       flex: 0 0 auto;
       flex-grow: 0;
       flex-shrink: 0;
-
       text-align: center;
     }
     .elecroute-label-consumer {
@@ -1229,6 +1227,7 @@ export class ElecSankey extends LitElement {
       flex-grow: 0;
       flex-shrink: 0;
       justify-content: left;
+      padding-left: 6px;
     }
     svg {
       rect {

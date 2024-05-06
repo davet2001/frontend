@@ -214,7 +214,7 @@ class HuiPowerFlowCard extends LitElement implements LovelaceCard {
       <ha-card>
         <ha-elec-sankey
           .hass=${this.hass}
-          .unit=${"kW"}
+          .unit=${"W"}
           .gridInRoute=${gridInRoute || undefined}
           .gridOutRoute=${gridOutRoute || undefined}
           .generationInRoutes=${generationInRoutes}
