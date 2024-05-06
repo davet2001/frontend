@@ -24,7 +24,7 @@ const CONSUMER_LABEL_HEIGHT = 50;
 
 const TARGET_SCALED_TRUNK_WIDTH = 90;
 
-const PV_COLOR = "#0d6a04";
+const GEN_COLOR = "#0d6a04";
 const GRID_IN_COLOR = "#920e83";
 
 const BLEND_LENGTH = 80;
@@ -35,8 +35,8 @@ const TEXT_PADDING = 8;
 const FONT_SIZE_PX = 16;
 const ICON_SIZE_PX = 24;
 
-const PV_ORIGIN_X = 150;
-const PV_ORIGIN_Y = 0;
+const GEN_ORIGIN_X = 150;
+const GEN_ORIGIN_Y = 0;
 
 const GRID_ORIGIN_X = 0;
 
@@ -539,10 +539,10 @@ export class ElecSankey extends LitElement {
     return totalHeight;
   }
 
-  private _pvColor(): string {
+  private _genColor(): string {
     const computedStyles = getComputedStyle(this);
-    const ret = computedStyles.getPropertyValue("--solar-color").trim();
-    return ret || PV_COLOR;
+    const ret = computedStyles.getPropertyValue("--generation-color").trim();
+    return ret || GEN_COLOR;
   }
 
   private _gridColor(): string {
@@ -597,12 +597,12 @@ export class ElecSankey extends LitElement {
       (this._phantomGenerationInRoute !== undefined ? 1 : 0);
     const fanOutWidth =
       totalGenWidth + (count - 1) * GENERATION_FAN_OUT_HORIZONTAL_GAP;
-    let xA = PV_ORIGIN_X - fanOutWidth / 2;
-    let xB = PV_ORIGIN_X - totalGenWidth / 2;
+    let xA = GEN_ORIGIN_X - fanOutWidth / 2;
+    let xB = GEN_ORIGIN_X - totalGenWidth / 2;
     const svgArray: TemplateResult[] = [];
     const divArray: TemplateResult[] = [];
 
-    const startTerminatorY = PV_ORIGIN_Y;
+    const startTerminatorY = GEN_ORIGIN_Y;
 
     const routes = structuredClone(this.generationInRoutes);
     if (this._phantomGenerationInRoute !== undefined) {
@@ -625,7 +625,7 @@ export class ElecSankey extends LitElement {
             startTerminatorY + TERMINATOR_BLOCK_LENGTH,
             xB,
             startTerminatorY + TERMINATOR_BLOCK_LENGTH,
-            "solar"
+            "generation"
           )
         );
         svgArray.push(
@@ -663,14 +663,14 @@ export class ElecSankey extends LitElement {
       genToConsWidth > 0
         ? renderFlowByCorners(
             x0 + totalGenWidth,
-            PV_ORIGIN_Y + TERMINATOR_BLOCK_LENGTH - PAD_ANTIALIAS,
+            GEN_ORIGIN_Y + TERMINATOR_BLOCK_LENGTH - PAD_ANTIALIAS,
             x0 + totalGenWidth - genToConsWidth,
-            PV_ORIGIN_Y + TERMINATOR_BLOCK_LENGTH - PAD_ANTIALIAS,
+            GEN_ORIGIN_Y + TERMINATOR_BLOCK_LENGTH - PAD_ANTIALIAS,
             x1,
             y1,
             x2,
             y2,
-            "solar"
+            "generation"
           )
         : svg``;
     const svgRet = svg`
@@ -699,22 +699,24 @@ export class ElecSankey extends LitElement {
       y10 + width,
       x10,
       y10,
-      "solar"
+      "generation"
     );
 
     return svg`
     ${generatedFlowPath}
     <rect
-      class="solar"
+      class="gen-grid-block"
       x="${GRID_ORIGIN_X + ARROW_HEAD_LENGTH}"
       y="${y10}"
       height="${width}"
       width="${x10 - GRID_ORIGIN_X - ARROW_HEAD_LENGTH}"
     />
-    <polygon points="${GRID_ORIGIN_X + ARROW_HEAD_LENGTH},${y10}
+    <polygon
+      class="gen-grid-arrow"
+      points="${GRID_ORIGIN_X + ARROW_HEAD_LENGTH},${y10}
       ${GRID_ORIGIN_X + ARROW_HEAD_LENGTH},${y10 + width}
       ${GRID_ORIGIN_X},${y10 + width / 2}"
-      class="solar"/>
+      />
   `;
   }
 
@@ -772,7 +774,7 @@ export class ElecSankey extends LitElement {
     return [divRet, svgRet, x3, y3];
   }
 
-  protected renderPVInBlendFlow(
+  protected renderGenInBlendFlow(
     x1: number,
     y1: number,
     endColor: string
@@ -786,12 +788,12 @@ export class ElecSankey extends LitElement {
       ? svg`
     <defs>
       <linearGradient id="grad_grid" 0="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" style="stop-color:${this._pvColor()};stop-opacity:1" />
+        <stop offset="0%" style="stop-color:${this._genColor()};stop-opacity:1" />
         <stop offset="100%" style="stop-color:${endColor};stop-opacity:1" />
       </linearGradient>
     </defs>
     <rect
-      id="pv-in-blend-rect"
+      id="gen-in-blend-rect"
       x=0
       y="${y1}"
       height="${width}"
@@ -815,7 +817,7 @@ export class ElecSankey extends LitElement {
 
     const svgRet = svg`
     <defs>
-      <linearGradient id="grad_pv" x1="0%" y1="0%" x2="100%" y2="0%">
+      <linearGradient id="grad_gen" x1="0%" y1="0%" x2="100%" y2="0%">
         <stop offset="0%" style="stop-color:${this._gridColor()};stop-opacity:1" />
         <stop offset="100%" style="stop-color:${endColor};stop-opacity:1" />
       </linearGradient>
@@ -826,7 +828,7 @@ export class ElecSankey extends LitElement {
       y="${y2}"
       height="${width}"
       width="${BLEND_LENGTH + 1}"
-      fill="url(#grad_pv)"
+      fill="url(#grad_gen)"
       style="fill-opacity:1"
     />
   `;
@@ -1008,7 +1010,11 @@ export class ElecSankey extends LitElement {
   }
 
   protected _rateInBlendColor(): string {
-    return mixHexes(this._gridColor(), this._pvColor(), this._gridBlendRatio());
+    return mixHexes(
+      this._gridColor(),
+      this._genColor(),
+      this._gridBlendRatio()
+    );
   }
 
   protected _calc_xy(): [
@@ -1021,19 +1027,19 @@ export class ElecSankey extends LitElement {
     number,
     number,
   ] {
-    const x0 = PV_ORIGIN_X - this._generationInFlowWidth() / 2;
-    const y0 = PV_ORIGIN_Y + TERMINATOR_BLOCK_LENGTH;
+    const x0 = GEN_ORIGIN_X - this._generationInFlowWidth() / 2;
+    const y0 = GEN_ORIGIN_Y + TERMINATOR_BLOCK_LENGTH;
 
     const widthGenToConsumers = this._generationToConsumersFlowWidth();
     const widthGenToGrid = this._generationToGridFlowWidth();
     const radiusGenToConsumers = 50 + widthGenToConsumers;
     const radiusGenToGrid = 50 + widthGenToGrid;
     const y1 = Math.max(
-      PV_ORIGIN_Y +
+      GEN_ORIGIN_Y +
         TERMINATOR_BLOCK_LENGTH +
         radiusGenToConsumers -
         widthGenToConsumers / 2,
-      PV_ORIGIN_Y +
+      GEN_ORIGIN_Y +
         TERMINATOR_BLOCK_LENGTH +
         radiusGenToGrid -
         widthGenToGrid / 2
@@ -1068,7 +1074,7 @@ export class ElecSankey extends LitElement {
     );
     const blendColor = this._rateInBlendColor();
 
-    const [pvInBlendFlowSvg, x4, y4] = this.renderPVInBlendFlow(
+    const [genInBlendFlowSvg, x4, y4] = this.renderGenInBlendFlow(
       x1,
       y1,
       blendColor
@@ -1091,7 +1097,7 @@ export class ElecSankey extends LitElement {
       svgScaleX
     );
 
-    const [pvInFlowDiv, pvInFlowSvg] = this.renderGenerationToConsumersFlow(
+    const [genInFlowDiv, genInFlowSvg] = this.renderGenerationToConsumersFlow(
       x0,
       x1,
       y1,
@@ -1114,7 +1120,7 @@ export class ElecSankey extends LitElement {
         ${gridInDiv}
       </div>
       <div class="col2 container">
-        <div class="col2top container">${pvInFlowDiv}</div>
+        <div class="col2top container">${genInFlowDiv}</div>
         <div class="col2bottom container">
           <div class="sankey-left">
             <svg
@@ -1124,7 +1130,7 @@ export class ElecSankey extends LitElement {
               height=${ymax * svgScaleX}
               preserveAspectRatio="none"
             >
-              ${pvInFlowSvg} ${generationToGridFlowSvg} ${gridInFlowSvg}
+              ${genInFlowSvg} ${generationToGridFlowSvg} ${gridInFlowSvg}
             </svg>
           </div>
           <div class="sankey-mid">
@@ -1134,7 +1140,7 @@ export class ElecSankey extends LitElement {
               height=${ymax * svgScaleX}
               preserveAspectRatio="none"
             >
-              ${pvInBlendFlowSvg} ${gridInBlendFlowSvg} ${blendedFlowPreFanOut}
+              ${genInBlendFlowSvg} ${gridInBlendFlowSvg} ${blendedFlowPreFanOut}
             </svg>
           </div>
           <div class="sankey-right">
@@ -1241,8 +1247,8 @@ export class ElecSankey extends LitElement {
       polygon {
         stroke: none;
       }
-      polygon.solar {
-        fill: var(--solar-color, #0d6a04);
+      polygon.gen-grid-arrow {
+        fill: var(--generation-color, #0d6a04);
       }
       polygon.tint {
         fill: #000000;
@@ -1251,13 +1257,13 @@ export class ElecSankey extends LitElement {
       path.flow {
         fill: gray;
       }
-      path.solar {
-        fill: var(--solar-color, #0d6a04);
-        stroke: var(--solar-color, #0d6a04);
+      path.generation {
+        fill: var(--generation-color, #0d6a04);
+        stroke: var(--generation-color, #0d6a04);
         stroke-width: 0;
       }
-      rect.solar {
-        fill: var(--solar-color, #0d6a04);
+      rect.generation {
+        fill: var(--generation-color, #0d6a04);
         stroke-width: 0;
       }
       rect.grid {

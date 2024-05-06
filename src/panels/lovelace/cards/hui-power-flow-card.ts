@@ -291,7 +291,7 @@ class HuiPowerFlowCard extends LitElement implements LovelaceCard {
         outline: none;
       }
       ha-elec-sankey {
-        --solar-color: var(--energy-solar-color);
+        --generation-color: var(--energy-solar-color);
         --grid-in-color: var(--energy-grid-consumption-color);
       }
       .name {

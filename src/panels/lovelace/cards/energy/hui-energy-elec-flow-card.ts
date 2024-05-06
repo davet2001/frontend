@@ -181,7 +181,7 @@ export class HuiEnergyElecFlowCard
       padding-bottom: 0;
     }
     ha-energy-sankey {
-      --solar-color: var(--energy-solar-color);
+      --generation-color: var(--energy-solar-color);
       --grid-in-color: var(--energy-grid-consumption-color);
     }
   `;
