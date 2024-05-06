@@ -1,11 +1,11 @@
 import { HassEntity } from "home-assistant-js-websocket/dist/types";
 import {
   css,
-  CSSResultGroup,
   html,
   LitElement,
   PropertyValues,
   nothing,
+  CSSResultArray,
 } from "lit";
 import { mdiSolarPower } from "@mdi/js";
 import { customElement, property, state } from "lit/decorators";
@@ -85,7 +85,7 @@ class HuiPowerFlowCard extends LitElement implements LovelaceCard {
       if (!isValidEntityId(config.power_from_grid_entity)) {
         throw new Error("Invalid power from grid entity specified");
       }
-      // Todo more checks
+      // @todo consider adding more config checks here.
       this._config = { ...config };
     }
   }
@@ -176,40 +176,6 @@ class HuiPowerFlowCard extends LitElement implements LovelaceCard {
         };
       }
     }
-    // const stateObj = this.hass.states[this._config.entity];
-
-    // if (!stateObj) {
-    //   return html`
-    //     <hui-warning>
-    //       ${createEntityNotFoundWarning(this.hass, this._config.entity)}
-    //     </hui-warning>
-    //   `;
-    // }
-
-    // const entityState = Number(stateObj.state);
-
-    // if (stateObj.state === UNAVAILABLE) {
-    //   return html`
-    //     <hui-warning
-    //       >${this.hass.localize(
-    //         "ui.panel.lovelace.warning.entity_unavailable",
-    //         { entity: this._config.entity }
-    //       )}</hui-warning
-    //     >
-    //   `;
-    // }
-
-    // if (isNaN(entityState)) {
-    //   return html`
-    //     <hui-warning
-    //       >${this.hass.localize(
-    //         "ui.panel.lovelace.warning.entity_non_numeric",
-    //         { entity: this._config.entity }
-    //       )}</hui-warning
-    //     >
-    //   `;
-    // }
-
     return html`
       <ha-card>
         <ha-elec-sankey
@@ -274,19 +240,16 @@ class HuiPowerFlowCard extends LitElement implements LovelaceCard {
     }
   }
 
-  static get styles(): CSSResultGroup {
-    return css`
+  static styles: CSSResultArray = [
+    css`
       ha-card {
         height: 100%;
-        //overflow: hidden;
         padding: 16px;
-        //display: flex;
         align-items: center;
         justify-content: center;
         flex-direction: column;
         box-sizing: border-box;
       }
-
       ha-card:focus {
         outline: none;
       }
@@ -302,8 +265,8 @@ class HuiPowerFlowCard extends LitElement implements LovelaceCard {
         font-size: 15px;
         margin-top: 8px;
       }
-    `;
-  }
+    `,
+  ];
 }
 
 declare global {

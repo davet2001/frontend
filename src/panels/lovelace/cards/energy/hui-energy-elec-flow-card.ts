@@ -1,5 +1,5 @@
 /**
- * To do
+ * @todo
  * - Verify what happens if incomplete data set is provided e.g.
  *   - grid but no generation,
  *   - no consumers
@@ -31,7 +31,7 @@ import { LovelaceCard } from "../../types";
 import { EnergySolarFlowCardConfig } from "../types";
 import "../../../../components/chart/elec-sankey";
 import type { ElecRoute } from "../../../../components/chart/elec-sankey";
-import "../../../../components/chart/ha-energy-sankey";
+import "../../../../components/chart/ha-elec-sankey";
 
 @customElement("hui-energy-elec-flow-card")
 export class HuiEnergyElecFlowCard
@@ -82,7 +82,7 @@ export class HuiEnergyElecFlowCard
             "has-header": !!this._config.title,
           })}"
         >
-          <ha-energy-sankey
+          <ha-elec-sankey
             .hass=${this.hass}
             .gridInRoute=${this._gridInRoute ? this._gridInRoute : undefined}
             .gridOutRoute=${this._gridOutRoute ? this._gridOutRoute : undefined}
@@ -90,7 +90,7 @@ export class HuiEnergyElecFlowCard
               ? this._generationInRoutes
               : {}}
             .consumerRoutes=${this._consumerRoutes ? this._consumerRoutes : {}}
-          ></ha-energy-sankey>
+          ></ha-elec-sankey>
         </div>
       </ha-card>
     `;
@@ -180,7 +180,7 @@ export class HuiEnergyElecFlowCard
     .card-header {
       padding-bottom: 0;
     }
-    ha-energy-sankey {
+    ha-elec-sankey {
       --generation-color: var(--energy-solar-color);
       --grid-in-color: var(--energy-grid-consumption-color);
     }
