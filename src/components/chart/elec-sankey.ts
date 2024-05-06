@@ -1050,7 +1050,8 @@ export class ElecSankey extends LitElement {
     const x2: number = x1;
     const y2: number = y1 + widthGenToConsumers;
 
-    const x10 = x0 + this._generationToGridFlowWidth() - (y2 - y0);
+    const temp = x0 + this._generationToGridFlowWidth() - (y2 - y0);
+    const x10 = temp > ARROW_HEAD_LENGTH ? temp : ARROW_HEAD_LENGTH;
     const y10 = y2 - this._generationToGridFlowWidth();
     return [x0, y0, x1, y1, x2, y2, x10, y10];
   }
