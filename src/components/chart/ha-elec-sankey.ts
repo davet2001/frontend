@@ -4,7 +4,6 @@ import { CSSResultArray, TemplateResult, css, html, nothing } from "lit";
 import { mdiArrowLeft, mdiArrowRight } from "@mdi/js";
 import { HomeAssistant } from "../../types";
 import { ElecSankey } from "./elec-sankey";
-// import { ElecSankeyEnhanced } from "./elec-sankey-enhanced";
 import { formatNumber } from "../../common/number/format_number";
 import "../ha-icon";
 import { fireEvent } from "../../common/dom/fire_event";
@@ -20,25 +19,28 @@ export class HaElecSankey extends ElecSankey {
     valueA: number,
     valueB: number | undefined
   ): TemplateResult {
+    const _id = id || "";
     return html`
       <div
         class=${id ? "label label-action-clickable" : "label"}
-        id=${id || ""}
+        id=${_id}
         @click=${id ? this._handleMoreInfo : nothing}
       >
         ${_name || nothing}
         ${icon
-          ? html`<ha-svg-icon .path=${icon}> </ha-svg-icon><br />`
+          ? html`<ha-svg-icon id=${_id} .path=${icon}> </ha-svg-icon><br />`
           : nothing}
         ${valueB !== undefined
-          ? html` <span class="return">
-                <ha-svg-icon class="small" .path=${mdiArrowLeft}> </ha-svg-icon
+          ? html` <span class="return" id=${_id}>
+                <ha-svg-icon id=${_id} class="small" .path=${mdiArrowLeft}>
+                </ha-svg-icon
                 >${formatNumber(valueB, this.hass.locale, {
                   maximumFractionDigits: 1,
                 })}&nbsp;${this.unit}</span
               ><br />
-              <span class="consumption">
-                <ha-svg-icon class="small" .path=${mdiArrowRight}> </ha-svg-icon
+              <span class="consumption" id=${_id}>
+                <ha-svg-icon id=${_id} class="small" .path=${mdiArrowRight}>
+                </ha-svg-icon
                 >${formatNumber(valueA, this.hass.locale, {
                   maximumFractionDigits: 1,
                 })}&nbsp;${this.unit}
