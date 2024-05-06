@@ -388,7 +388,6 @@ export class ElecSankey extends LitElement {
     this._phantomGenerationInRoute =
       phantomGeneration > 0
         ? {
-            id: "unknown_source",
             text: "Unknown source",
             icon: mdiHelpRhombus,
             rate: phantomGeneration,
@@ -640,6 +639,7 @@ export class ElecSankey extends LitElement {
         const midX = xA + width / 2;
         const LABEL_WIDTH = 72;
         const icon = routes[key].icon;
+        const id = routes[key].id || undefined;
         if (icon) {
           divArray.push(
             html`<div
@@ -649,7 +649,7 @@ export class ElecSankey extends LitElement {
                 2}px; flex-basis: ${LABEL_WIDTH}px; margin: 0 0 0 ${-LABEL_WIDTH /
               2}px;"
             >
-              ${this._generateLabelDiv(key, icon, undefined, rate)}
+              ${this._generateLabelDiv(id, icon, undefined, rate)}
             </div>`
           );
         }
