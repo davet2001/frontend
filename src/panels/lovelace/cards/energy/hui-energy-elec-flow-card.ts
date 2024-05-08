@@ -14,6 +14,8 @@ import { classMap } from "lit/directives/class-map";
 
 import "../../../../components/chart/ha-chart-base";
 import "../../../../components/ha-card";
+import type { ElecRoute } from "@davethompson/elec-sankey";
+import "@davethompson/elec-sankey";
 import {
   DeviceConsumptionEnergyPreference,
   EnergyData,
@@ -29,8 +31,6 @@ import { SubscribeMixin } from "../../../../mixins/subscribe-mixin";
 import { HomeAssistant } from "../../../../types";
 import { LovelaceCard } from "../../types";
 import { EnergySolarFlowCardConfig } from "../types";
-import "../../../../components/chart/elec-sankey";
-import type { ElecRoute } from "../../../../components/chart/elec-sankey";
 import "../../../../components/chart/ha-elec-sankey";
 
 @customElement("hui-energy-elec-flow-card")

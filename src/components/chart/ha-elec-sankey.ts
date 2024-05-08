@@ -2,8 +2,8 @@ import { customElement, property } from "lit/decorators";
 
 import { CSSResultArray, TemplateResult, css, html, nothing } from "lit";
 import { mdiArrowLeft, mdiArrowRight } from "@mdi/js";
+import { ElecSankey } from "@davethompson/elec-sankey";
 import { HomeAssistant } from "../../types";
-import { ElecSankey } from "./elec-sankey";
 import { formatNumber } from "../../common/number/format_number";
 import "../ha-icon";
 import { fireEvent } from "../../common/dom/fire_event";
